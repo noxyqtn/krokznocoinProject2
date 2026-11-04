@@ -8,59 +8,58 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         
         :root {
-            --bg-color: #18181b; /* Grigio scuro di base */
-            --dot-color: #8b5cf6; /* Viola per i pallini */
+            --bg-color: #18181b;
+            --dot-color: #8b5cf6; /* Viola */
             --glass-bg: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-color: #ffffff;
         }
 
-        /* Reset totale */
+        /* Reset totale e sfondo base */
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-            background: transparent; /* Obblighiamo il body a essere trasparente */
+            background-color: var(--bg-color) !important; 
             font-family: 'Inter', sans-serif;
             user-select: none;
         }
 
-        /* LIVELLO DI SFONDO A PALLINI (Incastrato dietro a tutto) */
+        /* SFONDO A PALLINI VIOLA - Z-INDEX NEGATIVO ESTREMO */
         .bg-grid {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: var(--bg-color);
-            /* Pallini viola */
             background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
             background-size: 30px 30px;
-            z-index: -1; /* STA DIETRO A TUTTO */
+            z-index: -9999 !important; /* Dietro a tutto */
             pointer-events: none;
+        }
+
+        /* DISTRUGGIAMO GLI SFONDI DI UNITY */
+        /* Questa regola dice: qualsiasi div creato da Unity al di fuori della finestra è trasparente */
+        body > div:not(.window-container):not(.bg-grid) {
+            background: transparent !important;
+            background-color: transparent !important;
         }
 
         /* FINESTRA AL CENTRO */
         .window-container {
             position: fixed;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 90vw;
-            height: 85vh;
-            max-width: 1400px;
-            max-height: 850px;
-            background: #000; /* Sfondo nero per il gioco */
+            width: 90vw; height: 85vh;
+            max-width: 1400px; max-height: 850px;
+            background: #000;
             border: 1px solid var(--glass-border);
             border-radius: 24px;
             box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8);
             overflow: hidden;
             transition: all 0.3s ease-in-out;
-            z-index: 10; /* Sopra lo sfondo a pallini */
+            z-index: 10;
         }
 
         .window-container.fullscreen {
-            width: 100vw;
-            height: 100vh;
-            max-width: 100%;
-            max-height: 100%;
-            border-radius: 0;
-            border: none;
+            width: 100vw; height: 100vh;
+            max-width: 100%; max-height: 100%;
+            border-radius: 0; border: none;
         }
 
         /* CONTENITORE DEL GIOCO */
@@ -69,16 +68,22 @@
             top: 0 !important; left: 0 !important;
             width: 100% !important; height: 100% !important;
             z-index: 1 !important;
-            overflow: hidden !important;
         }
 
-        /* Forza qualsiasi elemento di Unity a stare dentro e a non sbordare */
-        #gameContainer > * {
+        /* FORZA IL CANVAS A RIEMPIRE TUTTO */
+        /* Usiamo selettori potentissimi per sovrascrivere gli stili inline di Unity */
+        #gameContainer canvas, 
+        #unity-canvas,
+        canvas {
             position: absolute !important;
-            top: 0 !important; left: 0 !important;
-            width: 100% !important; height: 100% !important;
+            top: 0 !important; 
+            left: 0 !important;
+            width: 100% !important; 
+            height: 100% !important;
             object-fit: contain !important;
             outline: none !important;
+            display: block !important;
+            z-index: 1 !important;
         }
 
         /* UI OVERLAY */
@@ -119,26 +124,14 @@
 
         .btn-fullscreen {
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            border-radius: 12px;
-            transition: background 0.2s;
+            display: flex; align-items: center; justify-content: center;
+            padding: 12px; border-radius: 12px; transition: background 0.2s;
             border: 1px solid var(--glass-border);
-            background: var(--glass-bg);
-            color: white;
+            background: var(--glass-bg); color: white;
         }
 
-        .btn-fullscreen:hover {
-            background: rgba(255, 255, 255, 0.15);
-        }
-
-        .btn-fullscreen svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
-        }
+        .btn-fullscreen:hover { background: rgba(255, 255, 255, 0.15); }
+        .btn-fullscreen svg { width: 20px; height: 20px; fill: currentColor; }
     </style>
 
     <script type="text/javascript" src="4399.js"></script>
@@ -165,7 +158,7 @@
 </head>
 <body>
 
-    <!-- Lo sfondo a pallini che nessuno può coprire -->
+    <!-- Sfondo a pallini viola (Incastrato nel fondo) -->
     <div class="bg-grid"></div>
 
     <!-- La finestra con il gioco -->
@@ -191,61 +184,48 @@
         const gameContainer = document.getElementById('gameContainer');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-        // 1. Gestione Fullscreen
         fullscreenBtn.addEventListener('click', () => {
             windowContainer.classList.toggle('fullscreen');
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 350);
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
         });
 
-        // 2. IL BUTTAFUORI MUTATION OBSERVER
-        // Intercetta il millisecondo esatto in cui il loader crea il div di sfondo o il canvas
+        // IL BUTTAFUORI: Prende il Canvas e lo sbatte dentro #gameContainer
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.addedNodes.forEach((node) => {
-                    // Ignora i nostri elementi UI
-                    if (node.id === 'windowContainer' || node.id === 'gameContainer') return;
-
-                    // Se è un Canvas o un div generato da Unity
-                    if (node.tagName === 'CANVAS' || node.tagName === 'DIV' || node.tagName === 'SCRIPT') {
-                        // Se non è già dentro il nostro contenitore, lo teletrasportiamo dentro
-                        if (!gameContainer.contains(node) && node !== document.getElementById('master-loader.js')) {
-                            // Rimuoviamo stili che potrebbero forzarlo a schermo intero
-                            node.style.position = 'absolute';
-                            node.style.top = '0';
-                            node.style.left = '0';
-                            node.style.width = '100%';
-                            node.style.height = '100%';
-                            node.style.zIndex = '1';
-                            
+                    if (node.tagName === 'CANVAS') {
+                        if (!gameContainer.contains(node)) {
                             gameContainer.appendChild(node);
                             
-                            // Gestione focus per mouse e tastiera
-                            if (node.tagName === 'CANVAS') {
-                                setTimeout(() => {
-                                    node.setAttribute('tabindex', '0');
-                                    node.focus();
-                                    node.onmousedown = () => node.focus();
-                                }, 100);
-                            }
+                            // Forza il canvas a riempire la finestra rimuovendo gli stili inline di Unity
+                            node.style.setProperty('width', '100%', 'important');
+                            node.style.setProperty('height', '100%', 'important');
+                            node.style.setProperty('position', 'absolute', 'important');
+                            node.style.setProperty('top', '0', 'important');
+                            node.style.setProperty('left', '0', 'important');
+
+                            // Focus per far funzionare input
+                            setTimeout(() => {
+                                node.setAttribute('tabindex', '0');
+                                node.focus();
+                                node.onmousedown = () => node.focus();
+                            }, 100);
                         }
                     }
                 });
             });
         });
 
-        // Inizia a osservare l'intero documento
         observer.observe(document.body, { childList: true, subtree: true });
 
-        // Pulizia finale: nascondiamo eventuali contenitori vuoti lasciati indietro
+        // Rimuoviamo forzatamente eventuali div blu di sfondo generati da Unity
         setInterval(() => {
-            document.body.childNodes.forEach(node => {
-                if (node.nodeType === 1 && node.tagName !== 'DIV' && node.tagName !== 'SCRIPT' && node !== windowContainer) {
-                    node.style.display = 'none';
-                }
-            });
-        }, 1000);
+            const unityWrapper = document.getElementById('unity-container');
+            if (unityWrapper && unityWrapper.parentElement === document.body) {
+                unityWrapper.style.setProperty('background', 'transparent', 'important');
+                unityWrapper.style.setProperty('background-color', 'transparent', 'important');
+            }
+        }, 500);
     </script>
 </body>
 </html>
