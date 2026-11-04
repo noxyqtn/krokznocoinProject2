@@ -22,7 +22,7 @@
             user-select: none;
         }
 
-        /* Sfondo a pallini */
+        /* Sfondo a pallini viola */
         .bg-grid {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -30,12 +30,6 @@
             background-size: 30px 30px;
             z-index: -9999 !important; 
             pointer-events: none;
-        }
-
-        /* DISTRUGGIAMO LA SCATOLA GRIGIA DI UNITY */
-        #unity-container, #unity-loading-bar, .unity-container {
-            display: none !important;
-            background: transparent !important;
         }
 
         /* Finestra Centrale */
@@ -60,7 +54,7 @@
             border-radius: 0; border: none;
         }
 
-        /* Contenitore del gioco */
+        /* Il contenitore dentro cui mettiamo il gioco */
         #gameContainer {
             position: absolute !important;
             top: 0 !important; left: 0 !important;
@@ -68,11 +62,15 @@
             z-index: 1 !important;
         }
 
-        /* Forza il canvas a riempire la finestra */
-        #gameContainer canvas, canvas {
+        /* FORZA CHIUNQUE ENTRI NELLA FINESTRA A STARE NEI BORDI */
+        #gameContainer > *, 
+        #game-container, 
+        #unity-container, 
+        canvas {
             position: absolute !important;
             top: 0 !important; left: 0 !important;
             width: 100% !important; height: 100% !important;
+            margin: 0 !important; padding: 0 !important;
             object-fit: contain !important;
             outline: none !important;
             display: block !important;
@@ -180,41 +178,40 @@
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
         });
 
-        // IL BUTTAFUORI SUPREMO
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    
-                    // 1. Se viene aggiunto il Canvas, lo spostiamo e distruggiamo la sua scatola originale
-                    if (node.tagName === 'CANVAS') {
-                        if (!gameContainer.contains(node)) {
-                            const oldParent = node.parentElement;
-                            
-                            // Sposta il canvas dentro la finestra
-                            gameContainer.appendChild(node);
-                            
-                            // Se la sua vecchia casa non è la nostra finestra, nascondila per sempre
-                            if (oldParent && oldParent.id !== 'gameContainer' && oldParent.tagName === 'DIV') {
-                                oldParent.style.display = 'none';
-                            }
-                            
-                            setTimeout(() => {
-                                node.setAttribute('tabindex', '0');
-                                node.focus();
-                                node.onmousedown = () => node.focus();
-                            }, 100);
-                        }
-                    }
+        // IL BUTTAFUORI SUPREMO (Cerca qualsiasi cosa, anche i div con il trattino)
+        const forceUnityInside = setInterval(() => {
+            // 1. Cerchiamo il wrapper #game-container (con il trattino) che abbiamo visto nello screen
+            const unityWrapper = document.getElementById('game-container') || document.getElementById('unity-container');
+            
+            if (unityWrapper && unityWrapper.parentElement !== gameContainer) {
+                // Lo spostiamo dentro la finestra
+                gameContainer.appendChild(unityWrapper);
+                
+                // Gli togliamo TUTTI gli stili inline che gli ha messo Unity
+                unityWrapper.style.cssText = 'position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; margin: 0 !important; padding: 0 !important;';
+            }
 
-                    // 2. Se viene creato il div grigio di caricamento, nascondilo
-                    if (node.id === 'unity-container' || node.id === 'unity-loading-bar') {
-                        node.style.display = 'none';
-                    }
-                });
+            // 2. Cerchiamo il Canvas (a volte è separato)
+            const canvas = document.querySelector('canvas');
+            if (canvas && canvas.parentElement !== gameContainer && canvas.parentElement !== unityWrapper) {
+                gameContainer.appendChild(canvas);
+                canvas.style.cssText = 'position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; margin: 0 !important;';
+            }
+
+            // 3. Distruggiamo i caricamenti residui nel body
+            ['spinner', 'loader', 'unity-loading-bar'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && el.parentElement === document.body) el.style.display = 'none';
             });
-        });
-
-        observer.observe(document.body, { childList: true, subtree: true });
+            
+            // 4. Focus per far funzionare mouse e tastiera
+            if (canvas && !canvas.hasAttribute('data-focused')) {
+                canvas.setAttribute('tabindex', '0');
+                canvas.setAttribute('data-focused', 'true');
+                canvas.focus();
+                canvas.onmousedown = () => canvas.focus();
+            }
+        }, 100); // Esegue il controllo ogni 100ms per i primi secondi
     </script>
 </body>
 </html>
