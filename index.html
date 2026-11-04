@@ -5,118 +5,363 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Krokz No Coin</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&family=Helvetica+Neue:wght@400;500;600;700&display=swap');
+
+        /* Glassmorphic Dark Design System Tokens */
         :root {
-            --glass-bg: rgba(20, 20, 25, 0.6);
-            --glass-border: rgba(255, 255, 255, 0.15);
-            --glass-shadow: 0 24px 48px rgba(0, 0, 0, 0.6), inset 0 0 0 1px var(--glass-border);
-            --accent: #a78bfa;
-        }
-        
-        /* Sfondo scuro per far risaltare la finestra */
-        html, body { 
-            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; 
-            background: #09090b; font-family: 'Inter', sans-serif; user-select: none; 
-            display: flex; justify-content: center; align-items: center; 
+            --background: oklch(0.14 0 0);
+            --foreground: oklch(1 0 0);
+            --card: oklch(1 0 0 / 0.06);
+            --card-foreground: oklch(0.98 0 0);
+            --popover: oklch(0.18 0 0 / 0.92);
+            --popover-foreground: oklch(1 0 0);
+            --primary: oklch(0.65 0.19 250);
+            --primary-foreground: oklch(1 0 0);
+            --secondary: oklch(1 0 0 / 0.08);
+            --secondary-foreground: oklch(0.7 0 0);
+            --muted: oklch(1 0 0 / 0.05);
+            --muted-foreground: oklch(0.55 0 0);
+            --accent: oklch(0.65 0.19 250 / 0.15);
+            --accent-foreground: oklch(0.98 0 0);
+            --destructive: oklch(0.58 0.22 27);
+            --destructive-foreground: oklch(1 0 0);
+            --border: oklch(1 0 0 / 0.12);
+            --input: oklch(1 0 0 / 0.06);
+            --ring: oklch(0.65 0.19 250);
+            --radius: 1.25rem;
+            --chart-1: var(--primary);
+            --chart-2: oklch(from var(--primary) calc(l - 0.09) calc(c * 0.92) h);
+            --chart-3: oklch(from var(--primary) calc(l - 0.18) calc(c * 0.84) h);
+            --chart-4: oklch(from var(--primary) calc(l - 0.27) calc(c * 0.76) h);
+            --chart-5: oklch(from var(--primary) calc(l - 0.36) calc(c * 0.68) h);
+            --transition-duration-fast: 180ms;
+            --transition-duration-base: 240ms;
+            --transition-duration-slow: 300ms;
+            --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
+            --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+            --ease-in: cubic-bezier(0.895, 0.03, 0.685, 0.22);
+            --default-transition-duration: var(--transition-duration-fast);
+            --default-transition-timing-function: var(--ease-out);
+            --ai-label: var(--muted);
+            --ai-label-foreground: var(--foreground);
+            --layout-density: comfortable;
+            --layout-density-source: design-system;
+            --layout-sidebar: calc(var(--spacing, 0.25rem) * 56);
+            --layout-inset: calc(var(--spacing, 0.25rem) * 6);
+            --layout-section-gap: calc(var(--spacing, 0.25rem) * 8);
+            --layout-column-gap: calc(var(--spacing, 0.25rem) * 4);
+            --layout-card-padding: calc(var(--spacing, 0.25rem) * 5);
+            --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --radius-sm: calc(var(--radius) - 0.25rem);
+            --radius-md: calc(var(--radius) - 0.125rem);
+            --radius-lg: var(--radius);
+            --radius-xl: calc(var(--radius) + 0.25rem);
+            --radius-2xl: 1rem;
         }
 
-        /* L'effetto alone viola dietro la finestra */
-        body::before {
-            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 80vw; height: 80vh; background: radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, transparent 60%);
-            z-index: 0; pointer-events: none;
+        .dark {
+            --background: oklch(0.14 0 0);
+            --foreground: oklch(1 0 0);
+            --card: oklch(1 0 0 / 0.06);
+            --card-foreground: oklch(0.98 0 0);
+            --popover: oklch(0.18 0 0 / 0.92);
+            --popover-foreground: oklch(1 0 0);
+            --primary: oklch(0.65 0.19 250);
+            --primary-foreground: oklch(1 0 0);
+            --secondary: oklch(1 0 0 / 0.08);
+            --secondary-foreground: oklch(0.7 0 0);
+            --muted: oklch(1 0 0 / 0.05);
+            --muted-foreground: oklch(0.55 0 0);
+            --accent: oklch(0.65 0.19 250 / 0.15);
+            --accent-foreground: oklch(0.98 0 0);
+            --destructive: oklch(0.58 0.22 27);
+            --destructive-foreground: oklch(1 0 0);
+            --border: oklch(1 0 0 / 0.12);
+            --input: oklch(1 0 0 / 0.06);
+            --ring: oklch(0.65 0.19 250);
+            --radius: 1.25rem;
+            --chart-1: var(--primary);
+            --chart-2: oklch(from var(--primary) calc(l - 0.09) calc(c * 0.92) h);
+            --chart-3: oklch(from var(--primary) calc(l - 0.18) calc(c * 0.84) h);
+            --chart-4: oklch(from var(--primary) calc(l - 0.27) calc(c * 0.76) h);
+            --chart-5: oklch(from var(--primary) calc(l - 0.36) calc(c * 0.68) h);
+            --transition-duration-fast: 180ms;
+            --transition-duration-base: 240ms;
+            --transition-duration-slow: 300ms;
+            --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
+            --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+            --ease-in: cubic-bezier(0.895, 0.03, 0.685, 0.22);
+            --default-transition-duration: var(--transition-duration-fast);
+            --default-transition-timing-function: var(--ease-out);
+            --ai-label: var(--muted);
+            --ai-label-foreground: var(--foreground);
+            --layout-density: comfortable;
+            --layout-density-source: design-system;
+            --layout-sidebar: calc(var(--spacing, 0.25rem) * 56);
+            --layout-inset: calc(var(--spacing, 0.25rem) * 6);
+            --layout-section-gap: calc(var(--spacing, 0.25rem) * 8);
+            --layout-column-gap: calc(var(--spacing, 0.25rem) * 4);
+            --layout-card-padding: calc(var(--spacing, 0.25rem) * 5);
         }
 
-        /* LA FINESTRA (Ora è nera, non più sfocata) */
-        .glass-window {
-            position: relative;
-            width: 95vw;
-            height: 90vh;
-            max-width: 1600px;
-            max-height: 900px;
-            background: #000; /* Sfondo nero per il gioco */
-            border: 1px solid var(--glass-border); /* Bordo in vetro */
-            border-radius: 24px;
-            box-shadow: var(--glass-shadow);
+        *, *::before, *::after { box-sizing: border-box; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            z-index: 1;
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            background: var(--background);
+            font-family: var(--font-sans);
+            color: var(--foreground);
+            user-select: none;
         }
 
-        /* Stato Fullscreen */
-        .glass-window.fullscreen {
+        /* Host isolation CSS */
+        .ds {
+            color: var(--foreground);
+            background: var(--background);
+        }
+        .ds :where(h1,h2,h3,h4,h5,h6,p,strong,label,legend,li,dt,dd,small):not(.ds-supporting):not(.ds-card-desc):not(.ds-muted) {
+            color: inherit !important;
+        }
+
+        /* Liquid Glass Game Window - Centered Container */
+        .game-window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90vw;
+            height: 85vh;
+            max-width: 1200px;
+            max-height: 800px;
+            min-width: 320px;
+            min-height: 400px;
+            border-radius: var(--radius-2xl);
+            background: var(--card);
+            border: 1px solid var(--border);
+            box-shadow:
+                0 0.25rem 1.5rem rgba(0,0,0,0.3),
+                inset 0 0 0.5rem rgba(255,255,255,0.06);
+            backdrop-filter: blur(80px) saturate(150%);
+            -webkit-backdrop-filter: blur(80px) saturate(150%);
+            z-index: 10;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition:
+                width var(--transition-duration-base) var(--ease-out),
+                height var(--transition-duration-base) var(--ease-out),
+                max-width var(--transition-duration-base) var(--ease-out),
+                max-height var(--transition-duration-base) var(--ease-out),
+                border-radius var(--transition-duration-base) var(--ease-out),
+                top var(--transition-duration-base) var(--ease-out),
+                left var(--transition-duration-base) var(--ease-out),
+                transform var(--transition-duration-base) var(--ease-out);
+        }
+
+        /* Fullscreen state */
+        .game-window.is-fullscreen {
             width: 100vw;
             height: 100vh;
-            max-width: 100%;
-            max-height: 100%;
+            max-width: 100vw;
+            max-height: 100vh;
+            min-width: 0;
+            min-height: 0;
+            top: 0;
+            left: 0;
+            transform: none;
             border-radius: 0;
-            border: none;
         }
 
-        /* CONTENITORE DEL GIOCO - Bloccato dentro la finestra */
-        #gameContainer { 
-            position: absolute !important; 
-            top: 0 !important; left: 0 !important; 
-            width: 100% !important; height: 100% !important; 
-            z-index: 1 !important; 
-            overflow: hidden !important;
-        }
-        
-        /* Forza il canvas di Unity a rimanere dentro i bordi */
-        #gameContainer canvas { 
-            width: 100% !important; 
-            height: 100% !important; 
-            position: absolute !important; 
-            top: 0 !important; left: 0 !important;
-            object-fit: contain !important;
-            outline: none; 
+        /* Unity Canvas Container - INSIDE the window, clipped */
+        #gameContainer {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden; /* Clips canvas if it exceeds bounds */
+            z-index: 1;
         }
 
-        /* UI LAYER - Sopra tutto, non blocca i click del gioco */
-        .ui-layer { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: 999999 !important; 
-            pointer-events: none; 
-            padding: 24px; box-sizing: border-box; 
-            display: flex; flex-direction: column; justify-content: space-between; 
+        #gameContainer canvas {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
+            display: block;
         }
 
-        .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
-
-        /* EFFETTO VETRO (Solo sui pannelli, non sulla finestra) */
-        .glass-panel {
-            background: rgba(20, 20, 25, 0.6);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            padding: 12px 24px;
-            color: white;
-            pointer-events: auto;
+        /* UI Layer - Overlay on top of game, non-intercepting clicks */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            pointer-events: none; /* CRITICAL: doesn't intercept clicks */
+            padding: 12px 16px;
             display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        /* Glass Panel Component - using design system token values */
+        .glass-panel {
+            background: var(--card);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid color-mix(in oklab, oklch(1 0 0) 10%, transparent);
+            border-radius: 9999px; /* pill shape per design system */
+            box-shadow: inset 0 0 0.375rem rgba(255,255,255,0.06);
+            padding: 8px 16px; /* on-scale: 8, 16 */
+            color: var(--card-foreground);
+            pointer-events: auto; /* Only this panel catches clicks */
+            display: inline-flex;
             align-items: center;
-            gap: 20px;
+            gap: 8px; /* on-scale: 8 */
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.25rem;
+            white-space: nowrap;
+            transition:
+                background-color var(--transition-duration-base) var(--ease-out),
+                border-color var(--transition-duration-base) var(--ease-out),
+                box-shadow var(--transition-duration-base) var(--ease-out);
+            min-height: 44px; /* ensure minimum touch target for interactive element */
         }
 
-        .logo { font-weight: 800; font-size: 24px; letter-spacing: -1px; text-transform: lowercase; }
-        .logo span { color: var(--accent); }
-
-        .timer-panel { flex-direction: column; align-items: center; gap: 4px; padding: 8px 24px; }
-        .timer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; }
-        .timer-value { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
-
-        /* Bottone Fullscreen */
-        .btn-fullscreen {
-            background: transparent; border: none; color: white; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            padding: 8px; border-radius: 8px; transition: background 0.2s;
-            pointer-events: auto;
+        .glass-panel:hover {
+            background-color: oklch(1 0 0);
+            border-color: oklch(1 0 0);
+            color: var(--foreground);
         }
-        .btn-fullscreen:hover { background: rgba(255, 255, 255, 0.1); }
-        .btn-fullscreen svg { width: 20px; height: 20px; fill: currentColor; }
+
+        .logo {
+            font-weight: 700;
+            font-size: 0.875rem;
+            letter-spacing: -0.01em;
+            text-transform: lowercase;
+        }
+
+        .logo span {
+            color: var(--primary);
+        }
+
+        /* Fullscreen Toggle Button */
+        .fullscreen-btn {
+            background: var(--card);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border: 1px solid color-mix(in oklab, oklch(1 0 0) 10%, transparent);
+            border-radius: 9999px;
+            box-shadow: inset 0 0 0.375rem rgba(255,255,255,0.06);
+            padding: 12px 16px; /* on-scale: 12, 16; ensures 44x44 touch target (12+20+12=44) */
+            color: var(--card-foreground);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px; /* on-scale: 8 */
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.25rem;
+            white-space: nowrap;
+            transition:
+                background-color var(--transition-duration-base) var(--ease-out),
+                border-color var(--transition-duration-base) var(--ease-out),
+                box-shadow var(--transition-duration-base) var(--ease-out),
+                filter var(--transition-duration-fast) var(--ease-out);
+            min-height: 44px; /* ensure minimum touch target */
+            min-width: 44px;
+        }
+
+        .fullscreen-btn:hover {
+            background-color: oklch(1 0 0);
+            border-color: oklch(1 0 0);
+            color: var(--foreground);
+        }
+
+        .fullscreen-btn:active {
+            filter: brightness(90%);
+            transform: scale(0.98);
+        }
+
+        .fullscreen-btn:focus-visible {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            box-shadow:
+                inset 0 0 0.375rem rgba(255,255,255,0.06),
+                0 0 0 0.1875rem oklch(0.65 0.19 250 / 0.2);
+            border-color: color-mix(in oklab, var(--primary) 50%, transparent);
+        }
+
+        .fullscreen-btn svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            flex-shrink: 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .game-window {
+                width: 95vw;
+                height: 90vh;
+                max-width: 100vw;
+                max-height: 100vh;
+                min-width: 0;
+                min-height: 0;
+            }
+
+            .ui-layer {
+                padding: 8px 12px;
+            }
+
+            .glass-panel {
+                padding: 8px 12px; /* on-scale: 8, 12 */
+                font-size: 0.8125rem;
+            }
+
+            .fullscreen-btn {
+                padding: 12px 16px; /* on-scale: 12, 16; ensures 44x44 touch target */
+            }
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .glass-panel:focus-visible,
+            .fullscreen-btn:focus-visible {
+                outline: 2px solid transparent;
+                outline-offset: 2px;
+                box-shadow:
+                    inset 0 0 0.375rem rgba(255,255,255,0.06),
+                    0 0 0 0.1875rem oklch(0.65 0.19 250 / 0.2);
+                border-color: color-mix(in oklab, var(--primary) 50%, transparent);
+            }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .game-window {
+                transition: none;
+            }
+            .glass-panel,
+            .fullscreen-btn {
+                transition: none;
+            }
+        }
+
+        /* Scrollbar gutter stability */
+        html {
+            scrollbar-gutter: stable;
+        }
     </style>
-    
     <script type="text/javascript" src="4399.js"></script>
     <script>
         window.config = {
@@ -139,55 +384,66 @@
         };
     </script>
 </head>
-<body>
+<body class="ds">
+    <div class="game-window" id="gameWindow">
+        <div id="gameContainer"></div>
 
-    <!-- La cornice di vetro (Ora nera dentro) -->
-    <div class="glass-window" id="glassWindow">
-        
-        <!-- Il gioco -->
-        <div id="gameContainer" tabindex="0"></div>
-
-        <!-- La nostra UI in vetro -->
         <div class="ui-layer">
             <div class="top-bar">
                 <div class="glass-panel logo">krokz<span>no coin</span></div>
-                
-                <div style="display: flex; gap: 12px; align-items: flex-start;">
-                    <div class="glass-panel timer-panel">
-                        <div class="timer-label">No Coin Timer</div>
-                        <div class="timer-value" id="timerDisplay">00:00.00</div>
-                    </div>
-                    <!-- Pulsante Fullscreen -->
-                    <button class="glass-panel btn-fullscreen" id="fullscreenBtn" title="Toggle Fullscreen">
-                        <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-                    </button>
-                </div>
+                <button class="fullscreen-btn" id="fullscreenBtn" aria-label="Toggle fullscreen" aria-pressed="false">
+                    <svg id="fullscreenIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/>
+                    </svg>
+                    <svg id="exitFullscreenIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: none;">
+                        <path d="M4 14h6M4 10h6M14 4v6M14 18v6M18 4h6M18 18h6M22 14h-6M22 10h-6M2 4v6M2 18v6"/>
+                    </svg>
+                </button>
             </div>
         </div>
-
     </div>
 
     <script type="text/javascript" src="master-loader.js"></script>
-
     <script>
-        const glassWindow = document.getElementById('glassWindow');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        // Fullscreen toggle logic
+        (function() {
+            const gameWindow = document.getElementById('gameWindow');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const fullscreenIcon = document.getElementById('fullscreenIcon');
+            const exitFullscreenIcon = document.getElementById('exitFullscreenIcon');
 
-        fullscreenBtn.addEventListener('click', () => {
-            glassWindow.classList.toggle('fullscreen');
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 450);
-        });
+            let isFullscreen = false;
 
-        setTimeout(() => {
-            const canvas = document.querySelector('#gameContainer canvas');
-            if (canvas) {
-                canvas.setAttribute('tabindex', '0');
-                canvas.focus();
-                canvas.addEventListener('mousedown', () => canvas.focus());
+            function toggleFullscreen() {
+                isFullscreen = !isFullscreen;
+                gameWindow.classList.toggle('is-fullscreen', isFullscreen);
+                fullscreenBtn.setAttribute('aria-pressed', isFullscreen);
+                fullscreenIcon.style.display = isFullscreen ? 'none' : 'block';
+                exitFullscreenIcon.style.display = isFullscreen ? 'block' : 'none';
+                fullscreenBtn.setAttribute('aria-label', isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen');
             }
-        }, 3000);
+
+            fullscreenBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleFullscreen();
+            });
+
+            // ESC key to exit fullscreen
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && isFullscreen) {
+                    toggleFullscreen();
+                }
+            });
+
+            // Double-click on game area to toggle fullscreen (optional UX)
+            const gameContainer = document.getElementById('gameContainer');
+            gameContainer.addEventListener('dblclick', function(e) {
+                // Only toggle if clicking on empty space, not UI
+                if (e.target === gameContainer || e.target.tagName === 'CANVAS') {
+                    toggleFullscreen();
+                }
+            });
+        })();
     </script>
 </body>
 </html>
