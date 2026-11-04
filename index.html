@@ -10,6 +10,7 @@
             --glass-bg: rgba(20, 20, 25, 0.6);
             --glass-border: rgba(255, 255, 255, 0.15);
             --glass-shadow: 0 24px 48px rgba(0, 0, 0, 0.6), inset 0 0 0 1px var(--glass-border);
+            --accent: #a78bfa;
         }
         
         /* Sfondo scuro per far risaltare la finestra */
@@ -19,23 +20,22 @@
             display: flex; justify-content: center; align-items: center; 
         }
 
-        /* L'effetto alone dietro la finestra */
+        /* L'effetto alone viola dietro la finestra */
         body::before {
             content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 80vw; height: 80vh; background: radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, transparent 60%);
             z-index: 0; pointer-events: none;
         }
 
-        /* LA FINESTRA LIQUID GLASS */
+        /* LA FINESTRA (Ora è nera, non più sfocata) */
         .glass-window {
             position: relative;
             width: 95vw;
             height: 90vh;
             max-width: 1600px;
             max-height: 900px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            background: #000; /* Sfondo nero per il gioco */
+            border: 1px solid var(--glass-border); /* Bordo in vetro */
             border-radius: 24px;
             box-shadow: var(--glass-shadow);
             overflow: hidden;
@@ -43,16 +43,17 @@
             transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        /* Stato Fullscreen della finestra */
+        /* Stato Fullscreen */
         .glass-window.fullscreen {
             width: 100vw;
             height: 100vh;
             max-width: 100%;
             max-height: 100%;
             border-radius: 0;
+            border: none;
         }
 
-        /* CONTENITORE DEL GIOCO - Forzato a stare dentro */
+        /* CONTENITORE DEL GIOCO - Bloccato dentro la finestra */
         #gameContainer { 
             position: absolute !important; 
             top: 0 !important; left: 0 !important; 
@@ -61,19 +62,20 @@
             overflow: hidden !important;
         }
         
-        /* Forza il canvas di Unity a non uscire */
+        /* Forza il canvas di Unity a rimanere dentro i bordi */
         #gameContainer canvas { 
             width: 100% !important; 
             height: 100% !important; 
             position: absolute !important; 
             top: 0 !important; left: 0 !important;
+            object-fit: contain !important;
             outline: none; 
         }
 
-        /* UI LAYER - Z-INDEX ALTISSIMO PER STARE SOPRA TUTTO */
+        /* UI LAYER - Sopra tutto, non blocca i click del gioco */
         .ui-layer { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            z-index: 999999 !important; /* Sopra qualsiasi cosa Unity tiri fuori */
+            z-index: 999999 !important; 
             pointer-events: none; 
             padding: 24px; box-sizing: border-box; 
             display: flex; flex-direction: column; justify-content: space-between; 
@@ -81,10 +83,11 @@
 
         .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
 
+        /* EFFETTO VETRO (Solo sui pannelli, non sulla finestra) */
         .glass-panel {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: rgba(20, 20, 25, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -97,7 +100,7 @@
         }
 
         .logo { font-weight: 800; font-size: 24px; letter-spacing: -1px; text-transform: lowercase; }
-        .logo span { color: #a78bfa; }
+        .logo span { color: var(--accent); }
 
         .timer-panel { flex-direction: column; align-items: center; gap: 4px; padding: 8px 24px; }
         .timer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; }
@@ -138,13 +141,13 @@
 </head>
 <body>
 
-    <!-- La cornice di vetro -->
+    <!-- La cornice di vetro (Ora nera dentro) -->
     <div class="glass-window" id="glassWindow">
         
         <!-- Il gioco -->
         <div id="gameContainer" tabindex="0"></div>
 
-        <!-- La nostra UI (forzata sopra) -->
+        <!-- La nostra UI in vetro -->
         <div class="ui-layer">
             <div class="top-bar">
                 <div class="glass-panel logo">krokz<span>no coin</span></div>
@@ -167,7 +170,6 @@
     <script type="text/javascript" src="master-loader.js"></script>
 
     <script>
-        // Logica tasto fullscreen
         const glassWindow = document.getElementById('glassWindow');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
 
@@ -178,7 +180,6 @@
             }, 450);
         });
 
-        // Focus per far funzionare mouse e tastiera
         setTimeout(() => {
             const canvas = document.querySelector('#gameContainer canvas');
             if (canvas) {
