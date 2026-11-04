@@ -8,31 +8,30 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         
         :root {
-            --bg-color: #18181b; /* Grigio molto scuro */
-            --dot-color: #27272a; /* Colore dei pallini (grigio scuro) */
-            --accent-color: #8b5cf6; /* Viola per i pallini principali */
+            --bg-color: #121214;
+            --dot-color: #27272a;
+            --accent-color: #8b5cf6;
             --glass-bg: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
             --text-color: #ffffff;
         }
 
-        /* Sfondo grigio con pallini (Dot Grid) */
+        /* Sfondo grigio con pallini */
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
             background-color: var(--bg-color);
-            /* Crea l'effetto a pallini */
-            background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
+            background-image: radial-gradient(var(--dot-color) 1.5px, transparent 1.5px);
             background-size: 24px 24px;
             font-family: 'Inter', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             user-select: none;
         }
 
-        /* Finestra principale */
+        /* FINESTRA FISSATA AL CENTRO ESATTO (Risolve lo spostamento con la console aperta) */
         .window-container {
-            position: relative;
+            position: fixed; /* Fissa rispetto allo schermo */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* Centratura matematica perfetta */
             width: 90vw;
             height: 85vh;
             max-width: 1400px;
@@ -40,12 +39,13 @@
             background: #000;
             border: 1px solid var(--glass-border);
             border-radius: 24px;
-            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255,255,255,0.05);
-            overflow: hidden; /* Taglia fuori tutto ciò che esce */
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
             transition: all 0.3s ease-in-out;
             z-index: 9999 !important;
         }
 
+        /* Stato Fullscreen */
         .window-container.fullscreen {
             width: 100vw;
             height: 100vh;
@@ -55,7 +55,7 @@
             border: none;
         }
 
-        /* Contenitore del gioco */
+        /* Contenitore del gioco e barra di caricamento */
         #gameContainer {
             position: absolute !important;
             top: 0 !important;
@@ -64,10 +64,11 @@
             height: 100% !important;
             z-index: 1 !important;
             overflow: hidden !important;
+            background: #000; /* Nasconde eventuali bordi bianchi di Unity */
         }
 
-        /* Forza qualsiasi elemento generato da Unity a stare dentro */
-        #gameContainer canvas, #gameContainer div {
+        /* Forza qualsiasi cosa generi Unity a stare dentro la finestra */
+        #gameContainer > * {
             position: absolute !important;
             top: 0 !important;
             left: 0 !important;
@@ -75,10 +76,9 @@
             height: 100% !important;
             object-fit: contain !important;
             outline: none !important;
-            z-index: 1 !important;
         }
 
-        /* UI Overlay */
+        /* L'interfaccia (Logo e Bottone) */
         .ui-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -163,6 +163,7 @@
 <body>
 
     <div class="window-container" id="windowContainer">
+        <!-- Qui dentro verrà risucchiato tutto ciò che crea Unity -->
         <div id="gameContainer" tabindex="0"></div>
 
         <div class="ui-overlay">
@@ -184,7 +185,7 @@
         const gameContainer = document.getElementById('gameContainer');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
 
-        // 1. Gestione Fullscreen
+        // 1. Logica Fullscreen
         fullscreenBtn.addEventListener('click', () => {
             windowContainer.classList.toggle('fullscreen');
             setTimeout(() => {
@@ -192,33 +193,41 @@
             }, 350);
         });
 
-        // 2. MUTATION OBSERVER: Il buttafuori che blocca il fullscreen iniziale
-        // Appena Unity crea il canvas o la schermata di caricamento, lo spostiamo dentro!
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    // Se viene aggiunto un Canvas o un div di Unity
-                    if (node.tagName === 'CANVAS' || (node.id && node.id.toLowerCase().includes('unity'))) {
-                        if (!gameContainer.contains(node)) {
-                            // Lo teletrasportiamo dentro la nostra finestra
-                            gameContainer.appendChild(node);
-                            
-                            // Forziamo il focus per far funzionare mouse e tastiera
-                            if (node.tagName === 'CANVAS') {
-                                setTimeout(() => {
-                                    node.setAttribute('tabindex', '0');
-                                    node.focus();
-                                    node.onmousedown = () => node.focus();
-                                }, 100);
-                            }
-                        }
-                    }
-                });
-            });
-        });
+        // 2. IL BUTTAFUORI: Cattura il Canvas E la barra di caricamento
+        let attempts = 0;
+        const captureUnityElements = setInterval(() => {
+            attempts++;
+            
+            // Cerchiamo il canvas o i div generati dal loader (spesso hanno id come unity-container o unity-loading-bar)
+            const canvas = document.querySelector('canvas');
+            const unityContainer = document.getElementById('unity-container');
+            const loadingBar = document.getElementById('unity-loading-bar');
 
-        // Iniziamo a osservare il body per qualsiasi cambiamento
-        observer.observe(document.body, { childList: true, subtree: true });
+            // Se troviamo il canvas, lo spostiamo dentro
+            if (canvas && !gameContainer.contains(canvas)) {
+                gameContainer.appendChild(canvas);
+            }
+
+            // Se troviamo il contenitore di Unity (che include il loading), lo spostiamo
+            if (unityContainer && !gameContainer.contains(unityContainer)) {
+                gameContainer.appendChild(unityContainer);
+            }
+
+            // Se troviamo solo la barra di caricamento, la spostiamo
+            if (loadingBar && !gameContainer.contains(loadingBar)) {
+                gameContainer.appendChild(loadingBar);
+            }
+
+            // Forza il focus sul canvas per far funzionare mouse e tastiera
+            if (canvas && attempts % 4 === 0) {
+                canvas.setAttribute('tabindex', '0');
+                canvas.focus();
+                canvas.onmousedown = () => canvas.focus();
+            }
+
+            // Fermiamo il loop dopo 15 secondi (il gioco dovrebbe essere caricato)
+            if (attempts > 30) clearInterval(captureUnityElements);
+        }, 500);
     </script>
 </body>
 </html>
