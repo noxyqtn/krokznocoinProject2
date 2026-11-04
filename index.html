@@ -7,15 +7,26 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
         :root {
-            --glass-bg: rgba(20, 20, 25, 0.4);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            --glass-bg: rgba(20, 20, 25, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-shadow: 0 24px 48px rgba(0, 0, 0, 0.6), inset 0 0 0 1px var(--glass-border);
         }
         
-        /* Sfondo scuro al centro del quale mettiamo la finestra */
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #09090b; font-family: 'Inter', sans-serif; user-select: none; display: flex; justify-content: center; align-items: center; }
+        /* Sfondo scuro per far risaltare la finestra */
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; 
+            background: #09090b; font-family: 'Inter', sans-serif; user-select: none; 
+            display: flex; justify-content: center; align-items: center; 
+        }
 
-        /* LA NUOVA FINESTRA LIQUID GLASS */
+        /* L'effetto alone dietro la finestra */
+        body::before {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 80vw; height: 80vh; background: radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, transparent 60%);
+            z-index: 0; pointer-events: none;
+        }
+
+        /* LA FINESTRA LIQUID GLASS */
         .glass-window {
             position: relative;
             width: 95vw;
@@ -23,52 +34,74 @@
             max-width: 1600px;
             max-height: 900px;
             background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border-radius: 24px;
             box-shadow: var(--glass-shadow);
             overflow: hidden;
+            z-index: 1;
             transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        /* Stato fullscreen della finestra */
+        /* Stato Fullscreen della finestra */
         .glass-window.fullscreen {
             width: 100vw;
             height: 100vh;
             max-width: 100%;
             max-height: 100%;
             border-radius: 0;
-            border: none;
         }
 
-        /* Unity Canvas Container - riempie la finestra */
-        #gameContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: #000; }
-        canvas { width: 100% !important; height: 100% !important; object-fit: contain; outline: none; }
+        /* CONTENITORE DEL GIOCO - Forzato a stare dentro */
+        #gameContainer { 
+            position: absolute !important; 
+            top: 0 !important; left: 0 !important; 
+            width: 100% !important; height: 100% !important; 
+            z-index: 1 !important; 
+            overflow: hidden !important;
+        }
+        
+        /* Forza il canvas di Unity a non uscire */
+        #gameContainer canvas { 
+            width: 100% !important; 
+            height: 100% !important; 
+            position: absolute !important; 
+            top: 0 !important; left: 0 !important;
+            outline: none; 
+        }
 
-        /* UI Layer */
-        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
+        /* UI LAYER - Z-INDEX ALTISSIMO PER STARE SOPRA TUTTO */
+        .ui-layer { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            z-index: 999999 !important; /* Sopra qualsiasi cosa Unity tiri fuori */
+            pointer-events: none; 
+            padding: 24px; box-sizing: border-box; 
+            display: flex; flex-direction: column; justify-content: space-between; 
+        }
 
         .top-bar { display: flex; justify-content: space-between; align-items: flex-start; }
 
         .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
-            box-shadow: var(--glass-shadow);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             padding: 12px 24px;
             color: white;
             pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
         .logo { font-weight: 800; font-size: 24px; letter-spacing: -1px; text-transform: lowercase; }
         .logo span { color: #a78bfa; }
 
-        .timer-panel { text-align: center; display: flex; flex-direction: column; align-items: center; }
-        .timer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; margin-bottom: 4px; }
-        .timer-value { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .timer-panel { flex-direction: column; align-items: center; gap: 4px; padding: 8px 24px; }
+        .timer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; }
+        .timer-value { font-size: 28px; font-weight: 800; font-variant-numeric: tabular-nums; }
 
         /* Bottone Fullscreen */
         .btn-fullscreen {
@@ -81,7 +114,6 @@
         .btn-fullscreen svg { width: 20px; height: 20px; fill: currentColor; }
     </style>
     
-    <!-- Loader originale intatto -->
     <script type="text/javascript" src="4399.js"></script>
     <script>
         window.config = {
@@ -106,13 +138,13 @@
 </head>
 <body>
 
-    <!-- Nuova Finestra Liquid Glass -->
+    <!-- La cornice di vetro -->
     <div class="glass-window" id="glassWindow">
         
-        <!-- Container di Unity (ora sta dentro la finestra) -->
+        <!-- Il gioco -->
         <div id="gameContainer" tabindex="0"></div>
 
-        <!-- Interfaccia utente -->
+        <!-- La nostra UI (forzata sopra) -->
         <div class="ui-layer">
             <div class="top-bar">
                 <div class="glass-panel logo">krokz<span>no coin</span></div>
@@ -122,7 +154,7 @@
                         <div class="timer-label">No Coin Timer</div>
                         <div class="timer-value" id="timerDisplay">00:00.00</div>
                     </div>
-                    <!-- Tasto per ingrandire/rimpicciolire -->
+                    <!-- Pulsante Fullscreen -->
                     <button class="glass-panel btn-fullscreen" id="fullscreenBtn" title="Toggle Fullscreen">
                         <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
                     </button>
@@ -132,35 +164,27 @@
 
     </div>
 
-    <!-- Loader originale intatto -->
     <script type="text/javascript" src="master-loader.js"></script>
 
-    <!-- Nuovo Script per il tasto fullscreen e il focus -->
     <script>
-        // 1. Logica Fullscreen
+        // Logica tasto fullscreen
         const glassWindow = document.getElementById('glassWindow');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
 
         fullscreenBtn.addEventListener('click', () => {
             glassWindow.classList.toggle('fullscreen');
-            
-            // Aspetta che l'animazione CSS finisca (400ms) e poi forza Unity a ridimensionarsi
             setTimeout(() => {
                 window.dispatchEvent(new Event('resize'));
             }, 450);
         });
 
-        // 2. Forza il focus sul gioco (FONDAMENTALE per far funzionare mouse e tastiera)
+        // Focus per far funzionare mouse e tastiera
         setTimeout(() => {
             const canvas = document.querySelector('#gameContainer canvas');
             if (canvas) {
                 canvas.setAttribute('tabindex', '0');
                 canvas.focus();
-                
-                // Ripristina il focus se l'utente clicca sul gioco
-                canvas.addEventListener('mousedown', () => {
-                    canvas.focus();
-                });
+                canvas.addEventListener('mousedown', () => canvas.focus());
             }
         }, 3000);
     </script>
