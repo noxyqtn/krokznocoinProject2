@@ -11,8 +11,8 @@
         :root {
             --bg-color: #18181b; 
             --dot-color: #8b5cf6; 
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-bg: rgba(20, 20, 25, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.15);
             --text-color: #ffffff;
         }
 
@@ -79,118 +79,109 @@
 
         /* --- SCHERMATA DI CARICAMENTO --- */
         .loading-screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #09090b; /* Sfondo scuro per coprire il grigio di Unity */
-            z-index: 50;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            transition: opacity 0.6s ease;
-            color: white;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #09090b; z-index: 50;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.6s ease; color: white;
         }
-
-        .loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* Animazione Rotella */
+        .loading-screen.hidden { opacity: 0; pointer-events: none; }
         .spinner {
-            width: 50px; height: 50px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--dot-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
+            width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--dot-color); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
         }
-
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .loading-text {
-            font-size: 18px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            color: #a1a1aa;
-            animation: pulse 1.5s infinite alternate;
-        }
-        
-        .loading-title {
-            font-size: 32px;
-            font-weight: 800;
-            margin-bottom: 5px;
-            letter-spacing: -1px;
-        }
-        
+        .loading-text { font-size: 18px; font-weight: 600; letter-spacing: 1px; color: #a1a1aa; animation: pulse 1.5s infinite alternate; }
+        .loading-title { font-size: 32px; font-weight: 800; margin-bottom: 5px; letter-spacing: -1px; }
         .loading-title span { color: var(--dot-color); }
-
         @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
 
-        /* UI Overlay */
+        /* UI Overlay (Logo, Bottone) */
         .ui-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 10;
-            pointer-events: none; 
-            padding: 24px;
-            box-sizing: border-box;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10; pointer-events: none; padding: 24px; box-sizing: border-box;
+            display: flex; justify-content: space-between; align-items: flex-start;
         }
 
         .glass-panel {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 16px;
-            padding: 12px 20px;
-            color: var(--text-color);
-            pointer-events: auto; 
+            background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border); border-radius: 16px;
+            padding: 12px 20px; color: var(--text-color); pointer-events: auto; 
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .logo {
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            text-transform: lowercase;
-            display: flex;
-            gap: 6px;
-        }
-        
+        .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; text-transform: lowercase; display: flex; gap: 6px; }
         .logo .highlight { color: var(--dot-color); }
 
         .btn-fullscreen {
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
             padding: 12px; border-radius: 12px; transition: background 0.2s;
-            border: 1px solid var(--glass-border);
-            background: var(--glass-bg); color: white;
+            border: 1px solid var(--glass-border); background: var(--glass-bg); color: white;
         }
-
         .btn-fullscreen:hover { background: rgba(255, 255, 255, 0.15); }
         .btn-fullscreen svg { width: 20px; height: 20px; fill: currentColor; }
+
+        /* --- WIDGET TIMER (Draggabile e Resize) --- */
+        #timerWidget {
+            position: absolute;
+            top: 24px; left: 50%;
+            transform: translateX(-50%); /* Centrato in alto di default */
+            z-index: 100;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 12px 24px;
+            color: white;
+            cursor: grab;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transition: border-color 0.3s, color 0.3s;
+            pointer-events: auto;
+        }
+
+        #timerWidget:active { cursor: grabbing; }
+
+        .timer-label {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; margin-bottom: 4px;
+        }
+        
+        #timerDisplay {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums;
+            transition: font-size 0.2s;
+        }
+
+        /* Stato Invalido (Moneta Presa) */
+        #timerWidget.invalid {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        /* Controlli Timer (Resize) */
+        .timer-controls {
+            display: flex; gap: 8px; margin-top: 8px;
+        }
+        .timer-btn {
+            background: rgba(255,255,255,0.1); border: none; color: white;
+            border-radius: 6px; width: 24px; height: 24px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-weight: bold;
+        }
+        .timer-btn:hover { background: rgba(255,255,255,0.2); }
+
     </style>
 
     <script type="text/javascript" src="4399.js"></script>
     <script>
         window.config = {
-            loader: 'unity',
-            debug: false,
-            maxRatio: 16 / 9,
-            minRatio: 9 / 16,
-            title: 'Subway Surfers',
-            unityVersion: '2019.4.18f1',
-            unityWebglBuildUrl: 'Build/SanFrancisco.json',
-            fileSize: 35,
+            loader: 'unity', debug: false, maxRatio: 16 / 9, minRatio: 9 / 16, title: 'Subway Surfers',
+            unityVersion: '2019.4.18f1', unityWebglBuildUrl: 'Build/SanFrancisco.json', fileSize: 35,
             cachedDecompressedFileSizes: {
-                'SanFrancisco.asm.code.unityweb': 9077143,
-                'SanFrancisco.asm.framework.unityweb': 86369,
-                'SanFrancisco.asm.memory.unityweb': 951447,
-                'SanFrancisco.data.unityweb': 18323917,
-                'SanFrancisco.wasm.code.unityweb': 7279617,
-                'SanFrancisco.wasm.framework.unityweb': 90693
+                'SanFrancisco.asm.code.unityweb': 9077143, 'SanFrancisco.asm.framework.unityweb': 86369,
+                'SanFrancisco.asm.memory.unityweb': 951447, 'SanFrancisco.data.unityweb': 18323917,
+                'SanFrancisco.wasm.code.unityweb': 7279617, 'SanFrancisco.wasm.framework.unityweb': 90693
             }
         };
     </script>
@@ -201,7 +192,6 @@
 
     <div class="window-container" id="windowContainer">
         
-        <!-- SCHERMATA DI CARICAMENTO (in inglese) -->
         <div class="loading-screen" id="loadingScreen">
             <div class="loading-title">krokz<span> no coin</span></div>
             <div class="spinner"></div>
@@ -220,6 +210,17 @@
                 </svg>
             </button>
         </div>
+
+        <!-- WIDGET TIMER -->
+        <div id="timerWidget" class="glass-panel">
+            <div class="timer-label">No Coin Timer</div>
+            <div id="timerDisplay">00:00:000</div>
+            <div class="timer-controls">
+                <button class="timer-btn" id="btn-resize-down">-</button>
+                <button class="timer-btn" id="btn-resize-up">+</button>
+            </div>
+        </div>
+
     </div>
 
     <script type="text/javascript" src="master-loader.js"></script>
@@ -229,23 +230,24 @@
         const gameContainer = document.getElementById('gameContainer');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const loadingScreen = document.getElementById('loadingScreen');
+        
+        // Elementi Timer
+        const timerWidget = document.getElementById('timerWidget');
+        const timerDisplay = document.getElementById('timerDisplay');
 
         // 1. Logica Fullscreen
         fullscreenBtn.addEventListener('click', () => {
             windowContainer.classList.toggle('fullscreen');
-            setTimeout(() => {
-                window.dispatchEvent(new Event('resize'));
-            }, 350);
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
         });
 
-        // 2. Gestione del Caricamento e Focus
+        // 2. Caricamento e Focus
         let attempts = 0;
         const gameCheckInterval = setInterval(() => {
             attempts++;
             const canvas = document.querySelector('canvas');
             
             if (canvas) {
-                // Appena il canvas esiste, diamo il focus
                 if (!canvas.hasAttribute('data-focus-init')) {
                     canvas.setAttribute('tabindex', '0');
                     canvas.setAttribute('data-focus-init', 'true');
@@ -253,24 +255,156 @@
                     canvas.addEventListener('mousedown', () => canvas.focus());
                 }
 
-                // Se il gioco ha caricato (diamo 2.5 secondi di buffer per far disegnare il menu)
                 if (attempts > 5 && !loadingScreen.classList.contains('hidden')) {
                     loadingScreen.classList.add('hidden');
-                    setTimeout(() => {
-                        if(loadingScreen) loadingScreen.remove();
-                    }, 600); // Rimuove dal DOM dopo la transizione CSS
+                    setTimeout(() => { if(loadingScreen) loadingScreen.remove(); }, 600);
                 }
             }
-
-            // Anti-sbordo della finestra
             const unityWrapper = document.getElementById('game-container');
             if (unityWrapper && unityWrapper.parentElement !== gameContainer) {
                 gameContainer.appendChild(unityWrapper);
             }
-            
-            // Fermiamo il loop dopo 15 secondi
             if (attempts > 30) clearInterval(gameCheckInterval);
         }, 500);
+
+        // 3. DRAG & DROP DEL TIMER
+        let isDragging = false;
+        let offsetX, offsetY;
+
+        timerWidget.addEventListener('mousedown', (e) => {
+            // Ignora se si clicca sui bottoni di resize
+            if (e.target.tagName === 'BUTTON') return;
+            
+            isDragging = true;
+            // Calcola offset per non far "saltare" il timer quando lo afferri
+            const rect = timerWidget.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            
+            // Rimuove il transform di default per usare left/top in px
+            timerWidget.style.transform = 'none';
+            timerWidget.style.left = rect.left + 'px';
+            timerWidget.style.top = rect.top + 'px';
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            
+            let newX = e.clientX - offsetX;
+            let newY = e.clientY - offsetY;
+
+            // Limitiamo il trascinamento all'interno della finestra del gioco
+            const containerRect = windowContainer.getBoundingClientRect();
+            if (newX < containerRect.left) newX = containerRect.left;
+            if (newY < containerRect.top) newY = containerRect.top;
+            if (newX + timerWidget.offsetWidth > containerRect.right) newX = containerRect.right - timerWidget.offsetWidth;
+            if (newY + timerWidget.offsetHeight > containerRect.bottom) newY = containerRect.bottom - timerWidget.offsetHeight;
+
+            timerWidget.style.left = newX + 'px';
+            timerWidget.style.top = newY + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // 4. RESIZE DEL TIMER (+ / -)
+        let currentFontSize = 32;
+        document.getElementById('btn-resize-up').addEventListener('click', () => {
+            currentFontSize += 4;
+            timerDisplay.style.fontSize = currentFontSize + 'px';
+        });
+        document.getElementById('btn-resize-down').addEventListener('click', () => {
+            if (currentFontSize > 16) {
+                currentFontSize -= 4;
+                timerDisplay.style.fontSize = currentFontSize + 'px';
+            }
+        });
+
+        // 5. LOGICA DEL TIMER
+        let timerInterval;
+        let startTime = 0;
+        let elapsedTime = 0;
+        let isRunning = false;
+        let isPaused = false;
+
+        function formatTime(ms) {
+            const minutes = String(Math.floor(ms / 60000)).padStart(2, '0');
+            const seconds = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
+            const milliseconds = String(Math.floor(ms % 1000)).padStart(3, '0');
+            return `${minutes}:${seconds}:${milliseconds}`;
+        }
+
+        function startTimer() {
+            if (isRunning || isPaused) return;
+            isRunning = true;
+            timerWidget.classList.remove('invalid'); // Rimuove l'eventuale rosso
+            startTime = performance.now() - elapsedTime;
+            timerInterval = requestAnimationFrame(updateTimer);
+        }
+
+        function stopTimer() {
+            if (!isRunning) return;
+            isRunning = false;
+            isPaused = true;
+            cancelAnimationFrame(timerInterval);
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            isPaused = false;
+            elapsedTime = 0;
+            cancelAnimationFrame(timerInterval);
+            timerDisplay.innerText = "00:00:000";
+            timerWidget.classList.remove('invalid');
+        }
+
+        function updateTimer() {
+            if (!isRunning) return;
+            elapsedTime = performance.now() - startTime;
+            timerDisplay.innerText = formatTime(elapsedTime);
+            timerInterval = requestAnimationFrame(updateTimer);
+        }
+
+        // --- EVENTI DI GIOCO ---
+
+        // Tasto Spazio (Play/Reset) e ESC (Pausa)
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                // Se il gioco non ha mai girato (elapsedTime = 0) -> Avvia
+                if (!isRunning && !isPaused && elapsedTime === 0) {
+                    startTimer();
+                }
+                // Nota: Subway Surfers usa Spazio per saltare. 
+                // Dobbiamo stare attenti a non resettare il timer a ogni salto!
+                // Se il gioco è in Game Over, il tasto Spazio fa ripartire. 
+                // Per ora lo lasciamo così: se è in pausa/fermo e premi spazio, resetta.
+                else if (!isRunning && isPaused) {
+                    resetTimer();
+                    startTimer();
+                }
+            }
+            if (e.code === 'Escape') {
+                stopTimer();
+                console.log("Gioco in pausa (ESC). Timer fermato.");
+            }
+        });
+
+        // Funzione globale per quando il gioco rileva una moneta
+        window.onCoinCollected = function() {
+            if (isRunning) {
+                stopTimer();
+                timerWidget.classList.add('invalid'); // Diventa rosso
+                console.log("Moneta presa! Run invalidata.");
+            }
+        };
+
+        // ESPOSIZIONE DI TEST:
+        // Clicca due volte sul timer per simulare una moneta presa
+        timerWidget.addEventListener('dblclick', () => {
+            window.onCoinCollected();
+        });
+
     </script>
 </body>
 </html>
