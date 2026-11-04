@@ -11,11 +11,40 @@
             --glass-border: rgba(255, 255, 255, 0.1);
             --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #09090b; font-family: 'Inter', sans-serif; user-select: none; }
+        
+        /* Sfondo scuro al centro del quale mettiamo la finestra */
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #09090b; font-family: 'Inter', sans-serif; user-select: none; display: flex; justify-content: center; align-items: center; }
 
-        /* Unity Canvas Container */
-        #gameContainer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
-        canvas { width: 100% !important; height: 100% !important; object-fit: contain; }
+        /* LA NUOVA FINESTRA LIQUID GLASS */
+        .glass-window {
+            position: relative;
+            width: 95vw;
+            height: 90vh;
+            max-width: 1600px;
+            max-height: 900px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        /* Stato fullscreen della finestra */
+        .glass-window.fullscreen {
+            width: 100vw;
+            height: 100vh;
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 0;
+            border: none;
+        }
+
+        /* Unity Canvas Container - riempie la finestra */
+        #gameContainer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; background: #000; }
+        canvas { width: 100% !important; height: 100% !important; object-fit: contain; outline: none; }
 
         /* UI Layer */
         .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
@@ -37,11 +66,22 @@
         .logo { font-weight: 800; font-size: 24px; letter-spacing: -1px; text-transform: lowercase; }
         .logo span { color: #a78bfa; }
 
-        /* Timer UI (Placeholder per ora) */
         .timer-panel { text-align: center; display: flex; flex-direction: column; align-items: center; }
         .timer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; margin-bottom: 4px; }
         .timer-value { font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+        /* Bottone Fullscreen */
+        .btn-fullscreen {
+            background: transparent; border: none; color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            padding: 8px; border-radius: 8px; transition: background 0.2s;
+            pointer-events: auto;
+        }
+        .btn-fullscreen:hover { background: rgba(255, 255, 255, 0.1); }
+        .btn-fullscreen svg { width: 20px; height: 20px; fill: currentColor; }
     </style>
+    
+    <!-- Loader originale intatto -->
     <script type="text/javascript" src="4399.js"></script>
     <script>
         window.config = {
@@ -65,18 +105,64 @@
     </script>
 </head>
 <body>
-    <div id="gameContainer"></div>
 
-    <div class="ui-layer">
-        <div class="top-bar">
-            <div class="glass-panel logo">krokz<span>no coin</span></div>
-            <div class="glass-panel timer-panel">
-                <div class="timer-label">No Coin Timer</div>
-                <div class="timer-value" id="timerDisplay">00:00.00</div>
+    <!-- Nuova Finestra Liquid Glass -->
+    <div class="glass-window" id="glassWindow">
+        
+        <!-- Container di Unity (ora sta dentro la finestra) -->
+        <div id="gameContainer" tabindex="0"></div>
+
+        <!-- Interfaccia utente -->
+        <div class="ui-layer">
+            <div class="top-bar">
+                <div class="glass-panel logo">krokz<span>no coin</span></div>
+                
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                    <div class="glass-panel timer-panel">
+                        <div class="timer-label">No Coin Timer</div>
+                        <div class="timer-value" id="timerDisplay">00:00.00</div>
+                    </div>
+                    <!-- Tasto per ingrandire/rimpicciolire -->
+                    <button class="glass-panel btn-fullscreen" id="fullscreenBtn" title="Toggle Fullscreen">
+                        <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                    </button>
+                </div>
             </div>
         </div>
+
     </div>
 
+    <!-- Loader originale intatto -->
     <script type="text/javascript" src="master-loader.js"></script>
+
+    <!-- Nuovo Script per il tasto fullscreen e il focus -->
+    <script>
+        // 1. Logica Fullscreen
+        const glassWindow = document.getElementById('glassWindow');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+        fullscreenBtn.addEventListener('click', () => {
+            glassWindow.classList.toggle('fullscreen');
+            
+            // Aspetta che l'animazione CSS finisca (400ms) e poi forza Unity a ridimensionarsi
+            setTimeout(() => {
+                window.dispatchEvent(new Event('resize'));
+            }, 450);
+        });
+
+        // 2. Forza il focus sul gioco (FONDAMENTALE per far funzionare mouse e tastiera)
+        setTimeout(() => {
+            const canvas = document.querySelector('#gameContainer canvas');
+            if (canvas) {
+                canvas.setAttribute('tabindex', '0');
+                canvas.focus();
+                
+                // Ripristina il focus se l'utente clicca sul gioco
+                canvas.addEventListener('mousedown', () => {
+                    canvas.focus();
+                });
+            }
+        }, 3000);
+    </script>
 </body>
 </html>
