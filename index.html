@@ -67,25 +67,6 @@
         .loading-title span { color: var(--dot-color); }
         @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
 
-        /* OVERLAY COUNTDOWN 3 SECONDI */
-        #countdownOverlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 150;
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s;
-        }
-        #countdownOverlay.active { opacity: 1; pointer-events: auto; }
-        .countdown-number {
-            font-size: 120px; font-weight: 800; color: white;
-            text-shadow: 0 0 20px var(--dot-color);
-            animation: pop 1s ease-out infinite;
-        }
-        @keyframes pop {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(1); opacity: 0; }
-        }
-
         /* UI OVERLAY */
         .ui-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -210,10 +191,6 @@
 
         <div id="gameContainer" tabindex="0"></div>
 
-        <div id="countdownOverlay">
-            <div class="countdown-number" id="countdownText">3</div>
-        </div>
-
         <div class="ui-overlay">
             <div class="glass-panel logo">krokz <span class="highlight">no coin</span></div>
             
@@ -246,7 +223,7 @@
                 <div class="setting-row">
                     <span>Auto Restart on Coin (Press 'C')</span>
                     <label class="switch">
-                        <input type="checkbox" id="autoRestartToggle">
+                        <input type="checkbox" id="autoRestartToggle" checked>
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -284,6 +261,7 @@
 
     </div>
 
+    <!-- CARICAMENTO DEL GIOCO INTONSO -->
     <script type="text/javascript" src="master-loader.js"></script>
 
     <script>
@@ -299,26 +277,16 @@
         const autoRestartToggle = document.getElementById('autoRestartToggle');
         const customKeysToggle = document.getElementById('customKeysToggle');
         const keybindContainer = document.getElementById('keybind-container');
-        const countdownOverlay = document.getElementById('countdownOverlay');
-        const countdownText = document.getElementById('countdownText');
         const fpsCounter = document.getElementById('fpsCounter');
 
         // --- 1. SETTINGS E KEYBINDS STATE ---
-        let autoRestartEnabled = false;
+        let autoRestartEnabled = true;
         let customKeysEnabled = true;
         
-        let keybinds = {
-            up: 'KeyW',
-            down: 'KeyS',
-            left: 'KeyA',
-            right: 'KeyD'
-        };
-
+        let keybinds = { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD' };
         const bindBtns = {
-            up: document.getElementById('bind-up'),
-            down: document.getElementById('bind-down'),
-            left: document.getElementById('bind-left'),
-            right: document.getElementById('bind-right')
+            up: document.getElementById('bind-up'), down: document.getElementById('bind-down'),
+            left: document.getElementById('bind-left'), right: document.getElementById('bind-right')
         };
 
         function formatKeyName(code) {
@@ -329,17 +297,13 @@
             return code;
         }
 
-        for (let action in keybinds) {
-            bindBtns[action].innerText = formatKeyName(keybinds[action]);
-        }
+        for (let action in keybinds) { bindBtns[action].innerText = formatKeyName(keybinds[action]); }
 
         let listeningAction = null;
-
         for (let action in bindBtns) {
             bindBtns[action].addEventListener('click', (e) => {
                 if (listeningAction) return; 
                 e.stopPropagation();
-                
                 listeningAction = action;
                 bindBtns[action].classList.add('listening');
                 bindBtns[action].innerText = 'Press...';
@@ -348,13 +312,10 @@
 
         function assignKey(e) {
             if (!listeningAction) return;
-            e.preventDefault();
-            e.stopPropagation();
-
+            e.preventDefault(); e.stopPropagation();
             keybinds[listeningAction] = e.code;
             bindBtns[listeningAction].classList.remove('listening');
             bindBtns[listeningAction].innerText = formatKeyName(e.code);
-            
             listeningAction = null;
         }
 
@@ -366,14 +327,13 @@
         });
         
         autoRestartToggle.addEventListener('change', (e) => autoRestartEnabled = e.target.checked);
-        
         customKeysToggle.addEventListener('change', (e) => {
             customKeysEnabled = e.target.checked;
             keybindContainer.style.opacity = customKeysEnabled ? '1' : '0.4';
             keybindContainer.style.pointerEvents = customKeysEnabled ? 'auto' : 'none';
         });
 
-        // --- 2. FULLSCREEN & CARICAMENTO ORIGINALE ---
+        // --- 2. FULLSCREEN & CARICAMENTO (Identico all'originale per non spaccare il canvas) ---
         fullscreenBtn.addEventListener('click', () => {
             windowContainer.classList.toggle('fullscreen');
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
@@ -417,12 +377,11 @@
         }
         requestAnimationFrame(updateFPS);
 
-        // --- 4. TIMER LOGIC & COUNTDOWN ---
+        // --- 4. TIMER LOGIC ---
         let timerState = 'idle';
         let startTime = 0;
         let elapsedTime = 0;
         let timerInterval;
-        let countdownInterval;
 
         function formatTime(ms) {
             const minutes = String(Math.floor(ms / 60000)).padStart(2, '0');
@@ -443,6 +402,7 @@
             timerState = 'running';
             timerWidget.classList.remove('invalid', 'paused');
             startTime = performance.now() - elapsedTime;
+            cancelAnimationFrame(timerInterval);
             timerInterval = requestAnimationFrame(updateTimer);
         }
 
@@ -453,47 +413,24 @@
             timerWidget.classList.add('paused');
         }
 
-        function startCountdownThenResume() {
-            if (timerState !== 'paused') return;
-            timerState = 'countdown';
-            countdownOverlay.classList.add('active');
-            let count = 3;
-            countdownText.innerText = count;
-
-            countdownInterval = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    countdownText.innerText = count;
-                } else if (count === 0) {
-                    countdownText.innerText = "GO!";
-                } else {
-                    clearInterval(countdownInterval);
-                    countdownOverlay.classList.remove('active');
-                    startTimer();
-                }
-            }, 1000);
-        }
-
         function resetTimer() {
             timerState = 'idle';
             elapsedTime = 0;
             cancelAnimationFrame(timerInterval);
-            clearInterval(countdownInterval);
-            countdownOverlay.classList.remove('active');
             timerDisplay.innerText = "00:00:000";
             timerWidget.classList.remove('invalid', 'paused');
         }
 
         function stopTimerWithPenalty() {
+            if (timerState !== 'running') return;
             timerState = 'invalid';
             cancelAnimationFrame(timerInterval);
             timerWidget.classList.add('invalid');
             timerWidget.classList.remove('paused');
             
             if (autoRestartEnabled) {
-                setTimeout(() => {
-                    window.location.reload(); 
-                }, 2000);
+                // Ricarica la pagina dopo 2 secondi per restartare
+                setTimeout(() => { window.location.reload(); }, 2000);
             }
         }
 
@@ -534,12 +471,9 @@
 
         // --- 6. INPUT MAPPING E KEYDOWN ---
         window.addEventListener('keydown', (e) => {
-            if (listeningAction) {
-                assignKey(e);
-                return;
-            }
+            if (listeningAction) { assignKey(e); return; }
 
-            // Tasto C per dichiarare la sconfitta manuale sulla moneta
+            // Tasto C per dichiarare la sconfitta manuale sulla moneta (No-Coin Fail)
             if (e.code === 'KeyC') {
                 window.onCoinCollected();
                 return;
@@ -550,15 +484,11 @@
 
                 let action = null;
                 for (let act in keybinds) {
-                    if (e.code === keybinds[act]) {
-                        action = act;
-                        break;
-                    }
+                    if (e.code === keybinds[act]) { action = act; break; }
                 }
 
                 if (action) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                    e.preventDefault(); e.stopPropagation();
 
                     let arrowCode = null;
                     if (action === 'up') arrowCode = 'ArrowUp';
@@ -568,14 +498,8 @@
 
                     if (arrowCode) {
                         const keyCode = arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39;
-                        
-                        const downEvent = new KeyboardEvent('keydown', {
-                            key: arrowCode, code: arrowCode, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true
-                        });
-                        
-                        const upEvent = new KeyboardEvent('keyup', {
-                            key: arrowCode, code: arrowCode, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true
-                        });
+                        const downEvent = new KeyboardEvent('keydown', { key: arrowCode, code: arrowCode, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true });
+                        const upEvent = new KeyboardEvent('keyup', { key: arrowCode, code: arrowCode, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true });
 
                         const canvas = document.querySelector('canvas');
                         if (canvas) {
@@ -592,31 +516,25 @@
         // --- 7. EVENTI DI GIOCO (HOOKS) ---
         window.onGameStarted = function() { resetTimer(); startTimer(); };
         window.onGamePaused = function() { pauseTimer(); };
-        window.onGameResumed = function() { if (timerState === 'paused') startCountdownThenResume(); };
+        window.onGameResumed = function() { startTimer(); }; // Senza countdown
         window.onCoinCollected = function() { stopTimerWithPenalty(); };
 
-        // --- PATCH POKI SDK (Intercetta in modo sicuro i comandi di gioco senza toccare il canvas) ---
+        // --- 8. PATCH POKI SDK (Intercetta in modo sicuro i comandi di pausa/resume del gioco) ---
         let sdkHooked = false;
         const hookPoki = setInterval(() => {
+            // Controlla finchè la libreria Poki non è caricata e pronta
             if (window.PokiSDK && window.PokiSDK.gameplayStart && !sdkHooked) {
                 const origStart = window.PokiSDK.gameplayStart;
                 const origStop = window.PokiSDK.gameplayStop;
                 
-                // Segnale nativo del gioco: l'utente ha ripreso o iniziato la partita
                 window.PokiSDK.gameplayStart = function() {
-                    if (timerState === 'paused') {
-                        window.onGameResumed();
-                    } else if (timerState === 'idle') {
-                        window.onGameStarted();
-                    }
+                    if (timerState === 'paused') window.onGameResumed();
+                    else if (timerState === 'idle') window.onGameStarted();
                     return origStart.apply(this, arguments);
                 };
                 
-                // Segnale nativo del gioco: l'utente ha messo in pausa o perso
                 window.PokiSDK.gameplayStop = function() {
-                    if (timerState === 'running') {
-                        window.onGamePaused();
-                    }
+                    if (timerState === 'running') window.onGamePaused();
                     return origStop.apply(this, arguments);
                 };
                 
@@ -625,8 +543,7 @@
             }
         }, 500);
 
-        // --- PATCH 999K IN INDEXEDDB ---
-        // Funziona leggendo e scrivendo il salvataggio di Unity nel browser in background
+        // --- 9. PATCH 999K IN INDEXEDDB (Completamente in background) ---
         function apply999kHack() {
             try {
                 const req = indexedDB.open('/idbfs');
@@ -654,9 +571,8 @@
             } catch(e) {}
         }
         
-        // Applica l'hack 5 secondi dopo il caricamento per assicurarsi che Unity abbia creato il database, e poi ogni 15 secondi per mantenerlo attivo
-        setTimeout(apply999kHack, 5000);
-        setInterval(apply999kHack, 15000);
+        // Lo esegue silenziosamente ogni 10 secondi per fixare i soldi
+        setInterval(apply999kHack, 10000);
     </script>
 </body>
 </html>
