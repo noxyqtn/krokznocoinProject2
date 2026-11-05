@@ -338,14 +338,6 @@
             right: 'KeyD'
         };
 
-        // Mappatura: tasto personalizzato -> codice freccia nativo
-        const arrowMap = {
-            'KeyW': 'ArrowUp',
-            'KeyS': 'ArrowDown',
-            'KeyA': 'ArrowLeft',
-            'KeyD': 'ArrowRight'
-        };
-
         // UI per i keybinds
         const bindBtns = {
             up: document.getElementById('bind-up'),
@@ -588,10 +580,11 @@
                 return;
             }
 
-            // 4. Mappatura WASD -> Frecce (se abilitato)
+            // 4. Mappatura tasti personalizzati -> Frecce (se abilitato)
             if (customKeysEnabled && !settingsModal.classList.contains('active')) {
-                if (e.repeat) return; // Ignora se il tasto è tenuto premuto (evita spam)
+                if (e.repeat) return; // Evita spam se il tasto è tenuto premuto
 
+                // Trova l'azione corrispondente al tasto premuto
                 let action = null;
                 for (let act in keybinds) {
                     if (e.code === keybinds[act]) {
@@ -604,13 +597,12 @@
                     e.preventDefault();
                     e.stopPropagation();
 
-                    let arrowCode = arrowMap[e.code];
-                    if (!arrowCode) {
-                        if (action === 'up') arrowCode = 'ArrowUp';
-                        else if (action === 'down') arrowCode = 'ArrowDown';
-                        else if (action === 'left') arrowCode = 'ArrowLeft';
-                        else if (action === 'right') arrowCode = 'ArrowRight';
-                    }
+                    // Mappa l'AZIONE alla freccia corretta (indipendentemente dal tasto)
+                    let arrowCode = null;
+                    if (action === 'up') arrowCode = 'ArrowUp';
+                    else if (action === 'down') arrowCode = 'ArrowDown';
+                    else if (action === 'left') arrowCode = 'ArrowLeft';
+                    else if (action === 'right') arrowCode = 'ArrowRight';
 
                     if (arrowCode) {
                         const keyCode = arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39;
