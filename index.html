@@ -149,18 +149,20 @@
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         
         .modal-content {
-            width: 90%; max-width: 400px; padding: 30px; border-radius: 24px;
+            width: 90%; max-width: 450px; padding: 30px; border-radius: 24px;
             transform: translateY(20px); transition: transform 0.3s;
+            max-height: 80vh; overflow-y: auto;
         }
         .modal-overlay.active .modal-content { transform: translateY(0); }
         
-        .modal-title { font-size: 24px; font-weight: 800; margin-bottom: 20px; color: white; }
+        .modal-title { font-size: 24px; font-weight: 800; margin-bottom: 20px; color: white; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
         
         .setting-row {
             display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; color: white; font-weight: 600;
+            margin-bottom: 15px; color: white; font-weight: 600; font-size: 14px;
         }
 
+        /* Switch Toggle */
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3f3f46; transition: .4s; border-radius: 28px; }
@@ -168,7 +170,16 @@
         input:checked + .slider { background-color: var(--dot-color); }
         input:checked + .slider:before { transform: translateX(22px); }
 
-        .btn-close { width: 100%; padding: 12px; background: white; color: black; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 10px; }
+        /* Keybind Buttons */
+        .keybind-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 6px 16px; border-radius: 8px; font-weight: 800; font-family: 'Courier New', Courier, monospace;
+            cursor: pointer; transition: all 0.2s; min-width: 60px; text-align: center;
+        }
+        .keybind-btn:hover { background: rgba(255,255,255,0.2); }
+        .keybind-btn.listening { background: var(--dot-color); color: white; border-color: white; animation: pulse 1s infinite alternate; }
+
+        .btn-close { width: 100%; padding: 12px; background: white; color: black; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 15px; }
         .btn-close:hover { background: #e4e4e7; }
     </style>
 
@@ -182,12 +193,10 @@
                 const originalSuspend = context.suspend;
                 const originalResume = context.resume;
                 context.suspend = function() {
-                    // Quando Unity mette in pausa, sospende l'audio
                     if (window.onGamePaused) window.onGamePaused();
                     return originalSuspend.apply(context, arguments);
                 };
                 context.resume = function() {
-                    // Quando Unity riprende, riattiva l'audio
                     if (window.onGameResumed) window.onGameResumed();
                     return originalResume.apply(context, arguments);
                 };
@@ -252,9 +261,11 @@
             </div>
         </div>
 
+        <!-- SETTINGS MODAL CON KEYBINDS -->
         <div class="modal-overlay" id="settingsModal">
             <div class="modal-content glass-panel">
                 <div class="modal-title">Settings</div>
+                
                 <div class="setting-row">
                     <span>Auto Restart on Coin</span>
                     <label class="switch">
@@ -262,13 +273,34 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-                <div class="setting-row">
-                    <span>Enable WASD/Frecce</span>
+
+                <div class="setting-row" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                    <span>Enable Custom Keys</span>
                     <label class="switch">
-                        <input type="checkbox" id="wasdToggle" checked>
+                        <input type="checkbox" id="customKeysToggle" checked>
                         <span class="slider"></span>
                     </label>
                 </div>
+
+                <div id="keybind-container" style="opacity: 1; transition: opacity 0.3s;">
+                    <div class="setting-row">
+                        <span>Move Up</span>
+                        <button class="keybind-btn" id="bind-up">W</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Move Down</span>
+                        <button class="keybind-btn" id="bind-down">S</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Move Left</span>
+                        <button class="keybind-btn" id="bind-left">A</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Move Right</span>
+                        <button class="keybind-btn" id="bind-right">D</button>
+                    </div>
+                </div>
+
                 <button class="btn-close" id="closeSettings">Close</button>
             </div>
         </div>
@@ -288,19 +320,87 @@
         const timerWidget = document.getElementById('timerWidget');
         const timerDisplay = document.getElementById('timerDisplay');
         const autoRestartToggle = document.getElementById('autoRestartToggle');
-        const wasdToggle = document.getElementById('wasdToggle');
+        const customKeysToggle = document.getElementById('customKeysToggle');
+        const keybindContainer = document.getElementById('keybind-container');
         const countdownOverlay = document.getElementById('countdownOverlay');
         const countdownText = document.getElementById('countdownText');
         const fpsCounter = document.getElementById('fpsCounter');
 
+        // --- 1. SETTINGS E KEYBINDS STATE ---
         let autoRestartEnabled = false;
-        let wasdEnabled = true;
+        let customKeysEnabled = true;
+        
+        // Configurazione Default dei tasti (usiamo e.code)
+        let keybinds = {
+            up: 'KeyW',
+            down: 'KeyS',
+            left: 'KeyA',
+            right: 'KeyD'
+        };
 
-        // --- 1. SETTINGS ---
+        // UI per i keybinds
+        const bindBtns = {
+            up: document.getElementById('bind-up'),
+            down: document.getElementById('bind-down'),
+            left: document.getElementById('bind-left'),
+            right: document.getElementById('bind-right')
+        };
+
+        // Funzione per formattare il codice del tasto in modo carino
+        function formatKeyName(code) {
+            if (code.startsWith('Key')) return code.replace('Key', '');
+            if (code.startsWith('Arrow')) return code.replace('Arrow', '');
+            if (code.startsWith('Digit')) return code.replace('Digit', '');
+            if (code === 'Space') return 'SPACE';
+            return code;
+        }
+
+        // Inizializza UI
+        for (let action in keybinds) {
+            bindBtns[action].innerText = formatKeyName(keybinds[action]);
+        }
+
+        let listeningAction = null; // Traccia quale tasto stiamo aspettando
+
+        // Click sui bottoni per ascoltare il nuovo tasto
+        for (let action in bindBtns) {
+            bindBtns[action].addEventListener('click', (e) => {
+                if (listeningAction) return; // Ignora se stiamo già ascoltando
+                e.stopPropagation();
+                
+                listeningAction = action;
+                bindBtns[action].classList.add('listening');
+                bindBtns[action].innerText = 'Press...';
+            });
+        }
+
+        // Funzione per aggiornare il Keybind
+        function assignKey(e) {
+            if (!listeningAction) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            keybinds[listeningAction] = e.code;
+            bindBtns[listeningAction].classList.remove('listening');
+            bindBtns[listeningAction].innerText = formatKeyName(e.code);
+            
+            listeningAction = null;
+        }
+
         settingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
-        closeSettings.addEventListener('click', () => settingsModal.classList.remove('active'));
+        closeSettings.addEventListener('click', () => {
+            settingsModal.classList.remove('active');
+            listeningAction = null; // Reset se chiude mentre ascolta
+            for (let action in bindBtns) bindBtns[action].classList.remove('listening');
+        });
+        
         autoRestartToggle.addEventListener('change', (e) => autoRestartEnabled = e.target.checked);
-        wasdToggle.addEventListener('change', (e) => wasdEnabled = e.target.checked);
+        
+        customKeysToggle.addEventListener('change', (e) => {
+            customKeysEnabled = e.target.checked;
+            keybindContainer.style.opacity = customKeysEnabled ? '1' : '0.4';
+            keybindContainer.style.pointerEvents = customKeysEnabled ? 'auto' : 'none';
+        });
 
         // --- 2. FULLSCREEN & CARICAMENTO ---
         fullscreenBtn.addEventListener('click', () => {
@@ -347,7 +447,7 @@
         requestAnimationFrame(updateFPS);
 
         // --- 4. TIMER LOGIC & COUNTDOWN ---
-        let timerState = 'idle'; // idle, running, paused, countdown
+        let timerState = 'idle';
         let startTime = 0;
         let elapsedTime = 0;
         let timerInterval;
@@ -373,7 +473,6 @@
             timerWidget.classList.remove('invalid', 'paused');
             startTime = performance.now() - elapsedTime;
             timerInterval = requestAnimationFrame(updateTimer);
-            console.log("Timer Started/Resumed");
         }
 
         function pauseTimer() {
@@ -381,7 +480,6 @@
             timerState = 'paused';
             cancelAnimationFrame(timerInterval);
             timerWidget.classList.add('paused');
-            console.log("Timer Paused");
         }
 
         function startCountdownThenResume() {
@@ -400,7 +498,7 @@
                 } else {
                     clearInterval(countdownInterval);
                     countdownOverlay.classList.remove('active');
-                    startTimer(); // Ora il timer riparte
+                    startTimer();
                 }
             }, 1000);
         }
@@ -413,7 +511,6 @@
             countdownOverlay.classList.remove('active');
             timerDisplay.innerText = "00:00:000";
             timerWidget.classList.remove('invalid', 'paused');
-            console.log("Timer Reset");
         }
 
         function stopTimerWithPenalty() {
@@ -421,30 +518,34 @@
             cancelAnimationFrame(timerInterval);
             timerWidget.classList.add('invalid');
             timerWidget.classList.remove('paused');
-            console.log("Timer Stopped - Invalid Run (Coin)");
         }
 
-        // --- 5. INPUT MAPPING (WASD / Frecce) ---
+        // --- 5. INPUT MAPPING E KEYDOWN ---
         window.addEventListener('keydown', (e) => {
-            // Se il WASD è attivo, simuliamo gli swipe per Unity
-            if (wasdEnabled) {
+            // 1. Se stiamo assegnando un tasto, intercettalo e fermati
+            if (listeningAction) {
+                assignKey(e);
+                return;
+            }
+
+            // 2. Gestione Custom Keys (WASD / Frecce)
+            if (customKeysEnabled && !settingsModal.classList.contains('active')) {
+                // Blocca lo scroll della pagina quando si usano i tasti
+                if ([keybinds.up, keybinds.down, keybinds.left, keybinds.right].includes(e.code)) {
+                    e.preventDefault();
+                }
+
+                // Se il tasto è tenuto premuto, ignora per non fare 1000 swipe
+                if (e.repeat) return;
+
                 const canvas = document.querySelector('canvas');
                 if (canvas) {
                     const rect = canvas.getBoundingClientRect();
                     const centerX = rect.left + rect.width / 2;
                     const centerY = rect.top + rect.height / 2;
-                    const swipeDist = 100; // distanza in pixel per simulare lo swipe
+                    const swipeDist = 100;
 
                     function simulateSwipe(startX, startY, endX, endY) {
-                        const mouseDown = new MouseEvent('mousedown', { clientX: startX, clientY: startY, bubbles: true });
-                        const mouseMove = new MouseEvent('mousemove', { clientX: endX, clientY: endY, bubbles: true });
-                        const mouseUp = new MouseEvent('mouseup', { clientX: endX, clientY: endY, bubbles: true });
-                        
-                        canvas.dispatchEvent(mouseDown);
-                        canvas.dispatchEvent(mouseMove);
-                        canvas.dispatchEvent(mouseUp);
-                        
-                        // Simuliamo anche il touch per sicurezza
                         const touchStart = new TouchEvent('touchstart', { touches: [new Touch({identifier: 1, target: canvas, clientX: startX, clientY: startY})], bubbles: true });
                         const touchMove = new TouchEvent('touchmove', { touches: [new Touch({identifier: 1, target: canvas, clientX: endX, clientY: endY})], bubbles: true });
                         const touchEnd = new TouchEvent('touchend', { touches: [], bubbles: true });
@@ -454,24 +555,19 @@
                         canvas.dispatchEvent(touchEnd);
                     }
 
-                    if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
-                        simulateSwipe(centerX, centerY, centerX - swipeDist, centerY); // Swipe Left
-                    } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
-                        simulateSwipe(centerX, centerY, centerX + swipeDist, centerY); // Swipe Right
-                    } else if (e.code === 'ArrowUp' || e.code === 'KeyW') {
-                        simulateSwipe(centerX, centerY, centerX, centerY - swipeDist); // Swipe Up (Jump)
-                    } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
-                        simulateSwipe(centerX, centerY, centerX, centerY + swipeDist); // Swipe Down (Roll)
-                    }
+                    if (e.code === keybinds.up) simulateSwipe(centerX, centerY, centerX, centerY - swipeDist);
+                    else if (e.code === keybinds.down) simulateSwipe(centerX, centerY, centerX, centerY + swipeDist);
+                    else if (e.code === keybinds.left) simulateSwipe(centerX, centerY, centerX - swipeDist, centerY);
+                    else if (e.code === keybinds.right) simulateSwipe(centerX, centerY, centerX + swipeDist, centerY);
                 }
             }
 
-            // Gestione Timer (Pausa con ESC/P)
+            // 3. Gestione Pausa (ESC o P)
             if (e.code === 'Escape' || e.code === 'KeyP') {
                 if (timerState === 'running') pauseTimer();
             }
             
-            // Gestione Avvio/Ripresa con Spazio
+            // 4. Gestione Spazio (Play/Resume)
             if (e.code === 'Space') {
                 if (timerState === 'idle') {
                     resetTimer();
