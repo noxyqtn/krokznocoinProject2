@@ -67,7 +67,7 @@
         .loading-title span { color: var(--dot-color); }
         @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
 
-        /* OVERLAY COUNTDOWN */
+        /* OVERLAY COUNTDOWN 3 SECONDI */
         #countdownOverlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 150;
@@ -112,19 +112,32 @@
         .btn-icon:hover { background: rgba(255, 255, 255, 0.15); }
         .btn-icon svg { width: 20px; height: 20px; fill: currentColor; }
 
+        /* FPS COUNTER */
+        #fpsCounter {
+            position: absolute; bottom: 24px; right: 24px; z-index: 100;
+            font-family: 'Courier New', Courier, monospace; font-size: 14px;
+            color: #00ffcc; text-shadow: 0 0 5px #00ffcc; pointer-events: none;
+        }
+
         /* TIMER WIDGET */
         #timerWidget {
             position: absolute; top: 24px; left: 50%; transform: translateX(-50%); z-index: 100;
             background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border);
             border-radius: 16px; padding: 12px 24px; color: white; cursor: grab;
             display: flex; flex-direction: column; align-items: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5); transition: border-color 0.3s, color 0.3s;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); transition: border-color 0.3s, color 0.3s, transform 0.1s;
             pointer-events: auto;
         }
+        #timerWidget:active { cursor: grabbing; }
         #timerWidget.invalid { border-color: #ef4444; color: #ef4444; }
         #timerWidget.paused { border-color: #eab308; color: #eab308; }
+
         .timer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; margin-bottom: 4px; }
-        #timerDisplay { font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        #timerDisplay { font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; transition: font-size 0.2s; }
+        
+        .timer-controls { display: flex; gap: 8px; margin-top: 8px; }
+        .timer-btn { background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 6px; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .timer-btn:hover { background: rgba(255,255,255,0.2); }
 
         /* SETTINGS MODAL */
         .modal-overlay {
@@ -134,46 +147,53 @@
             opacity: 0; pointer-events: none; transition: opacity 0.3s;
         }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        
         .modal-content {
             width: 90%; max-width: 450px; padding: 30px; border-radius: 24px;
             transform: translateY(20px); transition: transform 0.3s;
+            max-height: 80vh; overflow-y: auto;
         }
         .modal-overlay.active .modal-content { transform: translateY(0); }
+        
         .modal-title { font-size: 24px; font-weight: 800; margin-bottom: 20px; color: white; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
-        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: white; font-weight: 600; font-size: 14px; }
+        
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; color: white; font-weight: 600; font-size: 14px;
+        }
+
+        /* Switch Toggle */
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3f3f46; transition: .4s; border-radius: 28px; }
         .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--dot-color); }
         input:checked + .slider:before { transform: translateX(22px); }
+
+        /* Keybind Buttons */
+        .keybind-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 6px 16px; border-radius: 8px; font-weight: 800; font-family: 'Courier New', Courier, monospace;
+            cursor: pointer; transition: all 0.2s; min-width: 60px; text-align: center;
+        }
+        .keybind-btn:hover { background: rgba(255,255,255,0.2); }
+        .keybind-btn.listening { background: var(--dot-color); color: white; border-color: white; animation: pulse 1s infinite alternate; }
+
         .btn-close { width: 100%; padding: 12px; background: white; color: black; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 15px; }
+        .btn-close:hover { background: #e4e4e7; }
     </style>
 
+    <script type="text/javascript" src="4399.js"></script>
     <script>
-        // HACK 999k: Scrive di nascosto i soldi nel salvataggio
-        setInterval(() => {
-            try {
-                const req = indexedDB.open('/idbfs');
-                req.onsuccess = function() {
-                    const db = req.result;
-                    if (!db.objectStoreNames.contains('FILE_DATA')) return;
-                    const tx = db.transaction('FILE_DATA', 'readwrite');
-                    tx.objectStore('FILE_DATA').openCursor().onsuccess = function(e) {
-                        const cursor = e.target.result;
-                        if (cursor) {
-                            if (typeof cursor.key === 'string' && cursor.key.includes('player')) {
-                                let content = new TextDecoder().decode(cursor.value.contents);
-                                content = content.replace(/"coins":\s*\d+/g, '"coins": 999999').replace(/"keys":\s*\d+/g, '"keys": 999999');
-                                cursor.value.contents = new TextEncoder().encode(content);
-                                cursor.update(cursor.value);
-                            }
-                            cursor.continue();
-                        }
-                    };
-                };
-            } catch(e) {}
-        }, 3000);
+        window.config = {
+            loader: 'unity', debug: false, maxRatio: 16 / 9, minRatio: 9 / 16, title: 'Subway Surfers',
+            unityVersion: '2019.4.18f1', unityWebglBuildUrl: 'Build/SanFrancisco.json', fileSize: 35,
+            cachedDecompressedFileSizes: {
+                'SanFrancisco.asm.code.unityweb': 9077143, 'SanFrancisco.asm.framework.unityweb': 86369,
+                'SanFrancisco.asm.memory.unityweb': 951447, 'SanFrancisco.data.unityweb': 18323917,
+                'SanFrancisco.wasm.code.unityweb': 7279617, 'SanFrancisco.wasm.framework.unityweb': 90693
+            }
+        };
     </script>
 </head>
 <body>
@@ -196,164 +216,447 @@
 
         <div class="ui-overlay">
             <div class="glass-panel logo">krokz <span class="highlight">no coin</span></div>
+            
             <div class="top-right-buttons">
-                <button class="btn-icon glass-panel" id="settingsBtn">
+                <button class="btn-icon glass-panel" id="settingsBtn" title="Settings">
                     <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
                 </button>
-                <button class="btn-icon glass-panel" id="fullscreenBtn">
+                <button class="btn-icon glass-panel" id="fullscreenBtn" title="Toggle Fullscreen">
                     <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
                 </button>
             </div>
         </div>
 
+        <div id="fpsCounter">FPS: 0</div>
+
         <div id="timerWidget" class="glass-panel">
             <div class="timer-label">No Coin Timer</div>
             <div id="timerDisplay">00:00:000</div>
+            <div class="timer-controls">
+                <button class="timer-btn" id="btn-resize-down">-</button>
+                <button class="timer-btn" id="btn-resize-up">+</button>
+            </div>
         </div>
 
+        <!-- SETTINGS MODAL CON KEYBINDS -->
         <div class="modal-overlay" id="settingsModal">
             <div class="modal-content glass-panel">
                 <div class="modal-title">Settings</div>
+                
                 <div class="setting-row">
-                    <span>Auto Restart on Coin</span>
-                    <label class="switch"><input type="checkbox" id="autoRestartToggle" checked><span class="slider"></span></label>
+                    <span>Auto Restart on Coin (Press 'C')</span>
+                    <label class="switch">
+                        <input type="checkbox" id="autoRestartToggle">
+                        <span class="slider"></span>
+                    </label>
                 </div>
+
+                <div class="setting-row" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                    <span>Enable Custom Keys (WASD/Arrows)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="customKeysToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div id="keybind-container" style="opacity: 1; transition: opacity 0.3s;">
+                    <div class="setting-row">
+                        <span>Move Up (Jump)</span>
+                        <button class="keybind-btn" id="bind-up">W</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Move Down (Roll)</span>
+                        <button class="keybind-btn" id="bind-down">S</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Move Left</span>
+                        <button class="keybind-btn" id="bind-left">A</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Move Right</span>
+                        <button class="keybind-btn" id="bind-right">D</button>
+                    </div>
+                </div>
+
                 <button class="btn-close" id="closeSettings">Close</button>
             </div>
         </div>
 
     </div>
 
-    <!-- CARICAMENTO DEL GIOCO ORIGINALE -->
-    <script type="text/javascript" src="poki-sdk.js"></script>
-    <script type="text/javascript" src="4399.js"></script>
-    <script>
-        window.config = {
-            loader: 'unity', debug: false, maxRatio: 16 / 9, minRatio: 9 / 16, title: 'Subway Surfers',
-            unityVersion: '2019.4.18f1', unityWebglBuildUrl: 'Build/SanFrancisco.json', fileSize: 35,
-            cachedDecompressedFileSizes: {
-                'SanFrancisco.asm.code.unityweb': 9077143, 'SanFrancisco.asm.framework.unityweb': 86369,
-                'SanFrancisco.asm.memory.unityweb': 951447, 'SanFrancisco.data.unityweb': 18323917,
-                'SanFrancisco.wasm.code.unityweb': 7279617, 'SanFrancisco.wasm.framework.unityweb': 90693
-            }
-        };
-    </script>
     <script type="text/javascript" src="master-loader.js"></script>
 
     <script>
-        // UI e Base
         const windowContainer = document.getElementById('windowContainer');
         const gameContainer = document.getElementById('gameContainer');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettings = document.getElementById('closeSettings');
+        const loadingScreen = document.getElementById('loadingScreen');
         const timerWidget = document.getElementById('timerWidget');
         const timerDisplay = document.getElementById('timerDisplay');
-        const loadingScreen = document.getElementById('loadingScreen');
+        const autoRestartToggle = document.getElementById('autoRestartToggle');
+        const customKeysToggle = document.getElementById('customKeysToggle');
+        const keybindContainer = document.getElementById('keybind-container');
         const countdownOverlay = document.getElementById('countdownOverlay');
         const countdownText = document.getElementById('countdownText');
-        const settingsModal = document.getElementById('settingsModal');
-        let autoRestartEnabled = true;
+        const fpsCounter = document.getElementById('fpsCounter');
 
-        document.getElementById('settingsBtn').onclick = () => settingsModal.classList.add('active');
-        document.getElementById('closeSettings').onclick = () => settingsModal.classList.remove('active');
-        document.getElementById('autoRestartToggle').onchange = (e) => autoRestartEnabled = e.target.checked;
-        document.getElementById('fullscreenBtn').onclick = () => { windowContainer.classList.toggle('fullscreen'); window.dispatchEvent(new Event('resize')); };
+        // --- 1. SETTINGS E KEYBINDS STATE ---
+        let autoRestartEnabled = false;
+        let customKeysEnabled = true;
+        
+        let keybinds = {
+            up: 'KeyW',
+            down: 'KeyS',
+            left: 'KeyA',
+            right: 'KeyD'
+        };
 
-        // Drag Timer
-        let isDragging = false, offsetX, offsetY;
-        timerWidget.onmousedown = (e) => { isDragging = true; const r = timerWidget.getBoundingClientRect(); offsetX = e.clientX - r.left; offsetY = e.clientY - r.top; timerWidget.style.transform = 'none'; timerWidget.style.left = r.left + 'px'; timerWidget.style.top = r.top + 'px'; };
-        document.onmousemove = (e) => { if (isDragging) { timerWidget.style.left = (e.clientX - offsetX) + 'px'; timerWidget.style.top = (e.clientY - offsetY) + 'px'; } };
-        document.onmouseup = () => isDragging = false;
+        const bindBtns = {
+            up: document.getElementById('bind-up'),
+            down: document.getElementById('bind-down'),
+            left: document.getElementById('bind-left'),
+            right: document.getElementById('bind-right')
+        };
 
-        // Gestione Caricamento visivo
-        const checkLoad = setInterval(() => {
+        function formatKeyName(code) {
+            if (code.startsWith('Key')) return code.replace('Key', '');
+            if (code.startsWith('Arrow')) return code.replace('Arrow', '');
+            if (code.startsWith('Digit')) return code.replace('Digit', '');
+            if (code === 'Space') return 'SPACE';
+            return code;
+        }
+
+        for (let action in keybinds) {
+            bindBtns[action].innerText = formatKeyName(keybinds[action]);
+        }
+
+        let listeningAction = null;
+
+        for (let action in bindBtns) {
+            bindBtns[action].addEventListener('click', (e) => {
+                if (listeningAction) return; 
+                e.stopPropagation();
+                
+                listeningAction = action;
+                bindBtns[action].classList.add('listening');
+                bindBtns[action].innerText = 'Press...';
+            });
+        }
+
+        function assignKey(e) {
+            if (!listeningAction) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            keybinds[listeningAction] = e.code;
+            bindBtns[listeningAction].classList.remove('listening');
+            bindBtns[listeningAction].innerText = formatKeyName(e.code);
+            
+            listeningAction = null;
+        }
+
+        settingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
+        closeSettings.addEventListener('click', () => {
+            settingsModal.classList.remove('active');
+            listeningAction = null; 
+            for (let action in bindBtns) bindBtns[action].classList.remove('listening');
+        });
+        
+        autoRestartToggle.addEventListener('change', (e) => autoRestartEnabled = e.target.checked);
+        
+        customKeysToggle.addEventListener('change', (e) => {
+            customKeysEnabled = e.target.checked;
+            keybindContainer.style.opacity = customKeysEnabled ? '1' : '0.4';
+            keybindContainer.style.pointerEvents = customKeysEnabled ? 'auto' : 'none';
+        });
+
+        // --- 2. FULLSCREEN & CARICAMENTO ORIGINALE ---
+        fullscreenBtn.addEventListener('click', () => {
+            windowContainer.classList.toggle('fullscreen');
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
+        });
+
+        let attempts = 0;
+        const gameCheckInterval = setInterval(() => {
+            attempts++;
             const canvas = document.querySelector('canvas');
             if (canvas) {
-                loadingScreen.classList.add('hidden');
-                clearInterval(checkLoad);
+                if (!canvas.hasAttribute('data-focus-init')) {
+                    canvas.setAttribute('tabindex', '0');
+                    canvas.setAttribute('data-focus-init', 'true');
+                    canvas.focus();
+                    canvas.addEventListener('mousedown', () => canvas.focus());
+                }
+                if (attempts > 5 && !loadingScreen.classList.contains('hidden')) {
+                    loadingScreen.classList.add('hidden');
+                    setTimeout(() => { if(loadingScreen) loadingScreen.remove(); }, 600);
+                }
             }
+            const unityWrapper = document.getElementById('game-container');
+            if (unityWrapper && unityWrapper.parentElement !== gameContainer) {
+                gameContainer.appendChild(unityWrapper);
+            }
+            if (attempts > 30) clearInterval(gameCheckInterval);
         }, 500);
 
-        // --- SISTEMA TIMER ---
-        let timerState = 'idle'; 
+        // --- 3. FPS COUNTER ---
+        let lastFrameTime = performance.now();
+        let frames = 0;
+        function updateFPS() {
+            frames++;
+            const now = performance.now();
+            if (now - lastFrameTime >= 1000) {
+                fpsCounter.innerText = `FPS: ${frames}`;
+                frames = 0;
+                lastFrameTime = now;
+            }
+            requestAnimationFrame(updateFPS);
+        }
+        requestAnimationFrame(updateFPS);
+
+        // --- 4. TIMER LOGIC & COUNTDOWN ---
+        let timerState = 'idle';
         let startTime = 0;
         let elapsedTime = 0;
-        let timerRaf;
-        let firstRun = true;
+        let timerInterval;
+        let countdownInterval;
+
+        function formatTime(ms) {
+            const minutes = String(Math.floor(ms / 60000)).padStart(2, '0');
+            const seconds = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
+            const milliseconds = String(Math.floor(ms % 1000)).padStart(3, '0');
+            return `${minutes}:${seconds}:${milliseconds}`;
+        }
 
         function updateTimer() {
             if (timerState !== 'running') return;
             elapsedTime = performance.now() - startTime;
-            const m = String(Math.floor(elapsedTime / 60000)).padStart(2, '0');
-            const s = String(Math.floor((elapsedTime % 60000) / 1000)).padStart(2, '0');
-            const ms = String(Math.floor(elapsedTime % 1000)).padStart(3, '0');
-            timerDisplay.innerText = `${m}:${s}:${ms}`;
-            timerRaf = requestAnimationFrame(updateTimer);
+            timerDisplay.innerText = formatTime(elapsedTime);
+            timerInterval = requestAnimationFrame(updateTimer);
         }
 
-        // --- COLLEGAMENTO REALE AI TASTI DEL GIOCO (POKI SDK) ---
-        let hooked = false;
-        setInterval(() => {
-            if (window.PokiSDK && !hooked) {
-                const origStop = window.PokiSDK.gameplayStop;
-                const origStart = window.PokiSDK.gameplayStart;
-                
-                // Si attiva quando clicchi la rotellina impostazioni del gioco
-                window.PokiSDK.gameplayStop = function() {
-                    if (timerState === 'running') {
-                        timerState = 'paused';
-                        cancelAnimationFrame(timerRaf);
-                        timerWidget.classList.add('paused');
-                    }
-                    if (origStop) return origStop.apply(this, arguments);
-                };
-                
-                // Si attiva quando clicchi Play o Resume del gioco
-                window.PokiSDK.gameplayStart = function() {
-                    if (firstRun || timerState === 'idle') {
-                        // Partenza da zero
-                        firstRun = false;
-                        timerState = 'running';
-                        elapsedTime = 0;
-                        startTime = performance.now();
-                        timerWidget.classList.remove('invalid', 'paused');
-                        timerRaf = requestAnimationFrame(updateTimer);
-                    } 
-                    else if (timerState === 'paused') {
-                        // Ripresa dalla pausa con countdown
-                        countdownOverlay.classList.add('active');
-                        let count = 3;
-                        countdownText.innerText = count;
-                        const cInt = setInterval(() => {
-                            count--;
-                            if (count > 0) countdownText.innerText = count;
-                            else if (count === 0) countdownText.innerText = "GO!";
-                            else {
-                                clearInterval(cInt);
-                                countdownOverlay.classList.remove('active');
-                                timerState = 'running';
-                                timerWidget.classList.remove('paused');
-                                startTime = performance.now() - elapsedTime;
-                                timerRaf = requestAnimationFrame(updateTimer);
-                            }
-                        }, 1000);
-                    }
-                    if (origStart) return origStart.apply(this, arguments);
-                };
-                hooked = true;
-            }
-        }, 500);
+        function startTimer() {
+            if (timerState === 'running') return;
+            timerState = 'running';
+            timerWidget.classList.remove('invalid', 'paused');
+            startTime = performance.now() - elapsedTime;
+            timerInterval = requestAnimationFrame(updateTimer);
+        }
 
-        // --- SCONFITTA (PREMI "C" PER FAR FERMARE IL TIMER ALLA MONETA) ---
+        function pauseTimer() {
+            if (timerState !== 'running') return;
+            timerState = 'paused';
+            cancelAnimationFrame(timerInterval);
+            timerWidget.classList.add('paused');
+        }
+
+        function startCountdownThenResume() {
+            if (timerState !== 'paused') return;
+            timerState = 'countdown';
+            countdownOverlay.classList.add('active');
+            let count = 3;
+            countdownText.innerText = count;
+
+            countdownInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownText.innerText = count;
+                } else if (count === 0) {
+                    countdownText.innerText = "GO!";
+                } else {
+                    clearInterval(countdownInterval);
+                    countdownOverlay.classList.remove('active');
+                    startTimer();
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            timerState = 'idle';
+            elapsedTime = 0;
+            cancelAnimationFrame(timerInterval);
+            clearInterval(countdownInterval);
+            countdownOverlay.classList.remove('active');
+            timerDisplay.innerText = "00:00:000";
+            timerWidget.classList.remove('invalid', 'paused');
+        }
+
+        function stopTimerWithPenalty() {
+            timerState = 'invalid';
+            cancelAnimationFrame(timerInterval);
+            timerWidget.classList.add('invalid');
+            timerWidget.classList.remove('paused');
+            
+            if (autoRestartEnabled) {
+                setTimeout(() => {
+                    window.location.reload(); 
+                }, 2000);
+            }
+        }
+
+        // --- 5. TIMER WIDGET DRAG & RESIZE ---
+        let isDragging = false;
+        let offsetX, offsetY;
+        timerWidget.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'BUTTON') return;
+            isDragging = true;
+            const rect = timerWidget.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            timerWidget.style.transform = 'none';
+            timerWidget.style.left = rect.left + 'px';
+            timerWidget.style.top = rect.top + 'px';
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            let newX = e.clientX - offsetX;
+            let newY = e.clientY - offsetY;
+            const containerRect = windowContainer.getBoundingClientRect();
+            if (newX < containerRect.left) newX = containerRect.left;
+            if (newY < containerRect.top) newY = containerRect.top;
+            if (newX + timerWidget.offsetWidth > containerRect.right) newX = containerRect.right - timerWidget.offsetWidth;
+            if (newY + timerWidget.offsetHeight > containerRect.bottom) newY = containerRect.bottom - timerWidget.offsetHeight;
+            timerWidget.style.left = newX + 'px';
+            timerWidget.style.top = newY + 'px';
+        });
+        document.addEventListener('mouseup', () => { isDragging = false; });
+
+        let currentFontSize = 32;
+        document.getElementById('btn-resize-up').addEventListener('click', () => {
+            currentFontSize += 4; timerDisplay.style.fontSize = currentFontSize + 'px';
+        });
+        document.getElementById('btn-resize-down').addEventListener('click', () => {
+            if (currentFontSize > 16) { currentFontSize -= 4; timerDisplay.style.fontSize = currentFontSize + 'px'; }
+        });
+
+        // --- 6. INPUT MAPPING E KEYDOWN ---
         window.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyC' && timerState === 'running') {
-                timerState = 'invalid';
-                cancelAnimationFrame(timerRaf);
-                timerWidget.classList.add('invalid');
-                
-                if (autoRestartEnabled) {
-                    setTimeout(() => window.location.reload(), 2000);
+            if (listeningAction) {
+                assignKey(e);
+                return;
+            }
+
+            // Tasto C per dichiarare la sconfitta manuale sulla moneta
+            if (e.code === 'KeyC') {
+                window.onCoinCollected();
+                return;
+            }
+
+            if (customKeysEnabled && !settingsModal.classList.contains('active')) {
+                if (e.repeat) return; 
+
+                let action = null;
+                for (let act in keybinds) {
+                    if (e.code === keybinds[act]) {
+                        action = act;
+                        break;
+                    }
+                }
+
+                if (action) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    let arrowCode = null;
+                    if (action === 'up') arrowCode = 'ArrowUp';
+                    else if (action === 'down') arrowCode = 'ArrowDown';
+                    else if (action === 'left') arrowCode = 'ArrowLeft';
+                    else if (action === 'right') arrowCode = 'ArrowRight';
+
+                    if (arrowCode) {
+                        const keyCode = arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39;
+                        
+                        const downEvent = new KeyboardEvent('keydown', {
+                            key: arrowCode, code: arrowCode, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true
+                        });
+                        
+                        const upEvent = new KeyboardEvent('keyup', {
+                            key: arrowCode, code: arrowCode, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true
+                        });
+
+                        const canvas = document.querySelector('canvas');
+                        if (canvas) {
+                            canvas.dispatchEvent(downEvent);
+                            canvas.dispatchEvent(upEvent);
+                        }
+                        document.dispatchEvent(downEvent);
+                        document.dispatchEvent(upEvent);
+                    }
                 }
             }
         });
+
+        // --- 7. EVENTI DI GIOCO (HOOKS) ---
+        window.onGameStarted = function() { resetTimer(); startTimer(); };
+        window.onGamePaused = function() { pauseTimer(); };
+        window.onGameResumed = function() { if (timerState === 'paused') startCountdownThenResume(); };
+        window.onCoinCollected = function() { stopTimerWithPenalty(); };
+
+        // --- PATCH POKI SDK (Intercetta in modo sicuro i comandi di gioco senza toccare il canvas) ---
+        let sdkHooked = false;
+        const hookPoki = setInterval(() => {
+            if (window.PokiSDK && window.PokiSDK.gameplayStart && !sdkHooked) {
+                const origStart = window.PokiSDK.gameplayStart;
+                const origStop = window.PokiSDK.gameplayStop;
+                
+                // Segnale nativo del gioco: l'utente ha ripreso o iniziato la partita
+                window.PokiSDK.gameplayStart = function() {
+                    if (timerState === 'paused') {
+                        window.onGameResumed();
+                    } else if (timerState === 'idle') {
+                        window.onGameStarted();
+                    }
+                    return origStart.apply(this, arguments);
+                };
+                
+                // Segnale nativo del gioco: l'utente ha messo in pausa o perso
+                window.PokiSDK.gameplayStop = function() {
+                    if (timerState === 'running') {
+                        window.onGamePaused();
+                    }
+                    return origStop.apply(this, arguments);
+                };
+                
+                sdkHooked = true;
+                clearInterval(hookPoki);
+            }
+        }, 500);
+
+        // --- PATCH 999K IN INDEXEDDB ---
+        // Funziona leggendo e scrivendo il salvataggio di Unity nel browser in background
+        function apply999kHack() {
+            try {
+                const req = indexedDB.open('/idbfs');
+                req.onsuccess = function() {
+                    const db = req.result;
+                    if (!db.objectStoreNames.contains('FILE_DATA')) return;
+                    const tx = db.transaction('FILE_DATA', 'readwrite');
+                    const store = tx.objectStore('FILE_DATA');
+                    store.openCursor().onsuccess = function(e) {
+                        const cursor = e.target.result;
+                        if (cursor) {
+                            if (typeof cursor.key === 'string' && cursor.key.includes('player')) {
+                                let content = new TextDecoder().decode(cursor.value.contents);
+                                if (content.includes('"coins"')) {
+                                    content = content.replace(/"coins":\s*\d+/g, '"coins": 999999');
+                                    content = content.replace(/"keys":\s*\d+/g, '"keys": 999999');
+                                    cursor.value.contents = new TextEncoder().encode(content);
+                                    cursor.update(cursor.value);
+                                }
+                            }
+                            cursor.continue();
+                        }
+                    };
+                };
+            } catch(e) {}
+        }
+        
+        // Applica l'hack 5 secondi dopo il caricamento per assicurarsi che Unity abbia creato il database, e poi ogni 15 secondi per mantenerlo attivo
+        setTimeout(apply999kHack, 5000);
+        setInterval(apply999kHack, 15000);
     </script>
 </body>
 </html>
