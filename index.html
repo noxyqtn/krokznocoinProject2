@@ -284,11 +284,11 @@
 
                 <div id="keybind-container" style="opacity: 1; transition: opacity 0.3s;">
                     <div class="setting-row">
-                        <span>Move Up</span>
+                        <span>Move Up (Jump)</span>
                         <button class="keybind-btn" id="bind-up">W</button>
                     </div>
                     <div class="setting-row">
-                        <span>Move Down</span>
+                        <span>Move Down (Roll)</span>
                         <button class="keybind-btn" id="bind-down">S</button>
                     </div>
                     <div class="setting-row">
@@ -336,6 +336,14 @@
             down: 'KeyS',
             left: 'KeyA',
             right: 'KeyD'
+        };
+
+        // Mappatura: tasto personalizzato -> codice freccia nativo
+        const arrowMap = {
+            'KeyW': 'ArrowUp',
+            'KeyS': 'ArrowDown',
+            'KeyA': 'ArrowLeft',
+            'KeyD': 'ArrowRight'
         };
 
         // UI per i keybinds
@@ -531,6 +539,7 @@
             // 2. Gestione Pausa (ESC o P)
             if (e.code === 'Escape' || e.code === 'KeyP') {
                 if (timerState === 'running') pauseTimer();
+                return;
             }
             
             // 3. Gestione Avvio/Ripresa con INVIO (Enter)
@@ -541,12 +550,52 @@
                 } else if (timerState === 'paused') {
                     startCountdownThenResume();
                 }
+                return;
             }
 
-            // NON intercettiamo WASD/Frecce/Spazio: lasciamo che Unity li gestisca nativamente.
-            // Se l'utente vuole usare tasti personalizzati, dobbiamo comunque evitare conflitti.
-            // Per ora, se customKeysEnabled è true, non facciamo nulla e lasciamo passare.
-            // In futuro potremmo implementare la simulazione solo per tasti non nativi.
+            // 4. Mappatura WASD -> Frecce (se abilitato)
+            if (customKeysEnabled && !settingsModal.classList.contains('active')) {
+                // Trova se il tasto premuto corrisponde a un'azione
+                let action = null;
+                for (let act in keybinds) {
+                    if (e.code === keybinds[act]) {
+                        action = act;
+                        break;
+                    }
+                }
+
+                if (action) {
+                    // Blocca l'evento originale per non farlo arrivare a Unity (che non lo capirebbe)
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    // Determina la freccia corrispondente
+                    let arrowCode = arrowMap[e.code];
+                    if (!arrowCode) {
+                        // Se l'utente ha impostato un tasto non mappato, proviamo a indovinare
+                        if (action === 'up') arrowCode = 'ArrowUp';
+                        else if (action === 'down') arrowCode = 'ArrowDown';
+                        else if (action === 'left') arrowCode = 'ArrowLeft';
+                        else if (action === 'right') arrowCode = 'ArrowRight';
+                    }
+
+                    if (arrowCode) {
+                        // Invia un evento keydown finto con il codice della freccia
+                        const fakeEvent = new KeyboardEvent('keydown', {
+                            key: arrowCode.replace('Arrow', 'Arrow'),
+                            code: arrowCode,
+                            keyCode: arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39,
+                            which: arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39,
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        // Invialo al canvas e al document
+                        const canvas = document.querySelector('canvas');
+                        if (canvas) canvas.dispatchEvent(fakeEvent);
+                        document.dispatchEvent(fakeEvent);
+                    }
+                }
+            }
         });
 
         // --- 6. EVENTI DI GIOCO (HOOKS) ---
