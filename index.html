@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>krokz // no coin challenge</title>
+    <title>krokz // no coin challenge - MODDED</title>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@700;800&display=swap');
         
         :root {
-            --bg-dark: #09090b; 
-            --accent: #8b5cf6; 
+            --bg-dark: #09090b;
+            --accent: #8b5cf6;
             --accent-glow: rgba(139, 92, 246, 0.45);
             --cyan: #06b6d4;
             --danger: #ef4444;
@@ -26,7 +26,6 @@
             background-color: var(--bg-dark); font-family: 'Inter', sans-serif; user-select: none;
         }
 
-        /* SFONDO ANIMATO CYBERPUNK */
         .bg-grid {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background-color: var(--bg-dark);
@@ -38,92 +37,92 @@
             z-index: 1; pointer-events: none !important;
         }
 
-        /* FINESTRA DI GIOCO CON GLOW */
         .window-container {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: 92vw; height: 88vh; max-width: 1440px; max-height: 880px;
-            background: #000; 
-            border: 1px solid rgba(139, 92, 246, 0.35); 
+            background: #000;
+            border: 1px solid rgba(139, 92, 246, 0.35);
             border-radius: 24px;
             box-shadow: 
                 0 25px 70px -10px rgba(0, 0, 0, 0.9),
                 0 0 40px -5px rgba(139, 92, 246, 0.2),
                 inset 0 0 0 1px rgba(255, 255, 255, 0.08);
             overflow: hidden;
-            transition: border-radius 0.3s ease, width 0.3s ease, height 0.3s ease; 
-            z-index: 10; 
+            transition: border-radius 0.3s ease, width 0.3s ease, height 0.3s ease;
+            z-index: 10;
         }
 
         .window-container.fullscreen {
-            width: 100vw; height: 100vh; max-width: 100%; max-height: 100%; 
+            width: 100vw; height: 100vh; max-width: 100%; max-height: 100%;
             border-radius: 0; border: none; box-shadow: none;
         }
 
-        /* --- FIX DEFINITIVO DEL MOUSE AL CENTRO --- */
-        /* Qualsiasi wrapper intermedio lascia passare i click al 100%, SOLO il canvas li riceve */
         #gameContainer, #game-container, #gameContainer div {
             position: absolute !important; top: 0 !important; left: 0 !important;
-            width: 100% !important; height: 100% !important; 
+            width: 100% !important; height: 100% !important;
             margin: 0 !important; padding: 0 !important;
             pointer-events: none !important;
             z-index: 1 !important;
         }
 
-        #gameContainer canvas { 
+        #gameContainer canvas {
             position: absolute !important; top: 0 !important; left: 0 !important;
             width: 100% !important; height: 100% !important;
-            outline: none !important; display: block !important; 
-            pointer-events: auto !important; /* IL CANVAS RICEVE TUTTI I CLICK */
+            outline: none !important; display: block !important;
+            pointer-events: auto !important;
             z-index: 2 !important;
             cursor: default;
+            transition: filter 0.3s ease;
         }
 
-        /* SCHERMATA DI CARICAMENTO */
+        /* POTATO GRAPHICS - texture sfocate */
+        #gameContainer.canvas-potato canvas {
+            filter: blur(10px) contrast(0.6) brightness(0.9) saturate(0.5);
+        }
+
         .loading-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at center, #13131a 0%, #09090b 100%);
             z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center;
             transition: opacity 0.5s ease; color: white;
         }
-        .loading-screen.hidden { 
-            opacity: 0 !important; 
-            pointer-events: none !important; 
-            display: none !important; 
+        .loading-screen.hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            display: none !important;
         }
         .spinner {
             width: 54px; height: 54px; border: 3px solid rgba(139, 92, 246, 0.15);
             border-top-color: var(--accent); border-right-color: var(--cyan);
-            border-radius: 50%; animation: spin 0.8s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite; 
+            border-radius: 50%; animation: spin 0.8s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
             margin-bottom: 24px; box-shadow: 0 0 25px var(--accent-glow);
         }
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading-text { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 3px; color: #a1a1aa; }
         .loading-title { font-size: 36px; font-weight: 900; margin-bottom: 8px; letter-spacing: -1.5px; }
-        .loading-title span { 
+        .loading-title span {
             background: linear-gradient(135deg, #a855f7, #06b6d4);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        /* UI OVERLAY (Completamente intangibile ai click) */
         .ui-overlay {
             position: absolute; top: 0; left: 0; width: 100%;
-            z-index: 20; pointer-events: none !important; 
+            z-index: 20; pointer-events: none !important;
             padding: 20px 24px; box-sizing: border-box;
             display: flex; justify-content: space-between; align-items: flex-start;
         }
 
         .glass-panel {
-            background: var(--glass-bg); 
+            background: var(--glass-bg);
             backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); 
-            border-radius: 16px; 
-            color: var(--text-color); 
-            pointer-events: auto !important; 
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            color: var(--text-color);
+            pointer-events: auto !important;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
 
-        /* LOGO BADGE */
-        .logo-badge { 
+        .logo-badge {
             padding: 10px 18px; display: flex; align-items: center; gap: 10px;
             font-size: 18px; font-weight: 900; letter-spacing: -0.5px;
             transition: transform 0.2s, border-color 0.2s;
@@ -133,21 +132,21 @@
             width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
             box-shadow: 0 0 10px var(--accent);
         }
-        .logo-badge .highlight { 
+        .logo-badge .highlight {
             background: linear-gradient(135deg, #c084fc, #38bdf8);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
         .top-right-buttons { display: flex; gap: 10px; align-items: center; pointer-events: none !important; }
-        
+
         .btn-icon {
             cursor: pointer; display: flex; align-items: center; justify-content: center;
             width: 44px; height: 44px; border-radius: 14px; transition: all 0.2s ease;
             border: 1px solid var(--glass-border); background: var(--glass-bg); color: #e4e4e7;
             pointer-events: auto !important;
         }
-        .btn-icon:hover { 
-            background: rgba(139, 92, 246, 0.2); 
+        .btn-icon:hover {
+            background: rgba(139, 92, 246, 0.2);
             border-color: var(--accent); color: white;
             box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
             transform: translateY(-2px);
@@ -155,17 +154,15 @@
         .btn-icon:active { transform: translateY(0) scale(0.95); }
         .btn-icon svg { width: 20px; height: 20px; fill: currentColor; pointer-events: none; }
 
-        /* FPS PILL */
         #fpsCounter {
             position: absolute; bottom: 18px; right: 20px; z-index: 20;
             font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
             background: rgba(10, 10, 14, 0.75); border: 1px solid rgba(16, 185, 129, 0.3);
             padding: 6px 12px; border-radius: 10px;
-            color: var(--success); text-shadow: 0 0 8px rgba(16, 185, 129, 0.4); 
+            color: var(--success); text-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
             pointer-events: none !important; backdrop-filter: blur(8px);
         }
 
-        /* TIMER WIDGET PRO */
         #timerWidget {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 30;
             padding: 12px 24px; color: white; cursor: grab;
@@ -175,16 +172,16 @@
             min-width: 190px;
         }
         #timerWidget:active { cursor: grabbing; }
-        #timerWidget.running { 
-            border-color: rgba(16, 185, 129, 0.5); 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(16, 185, 129, 0.2); 
+        #timerWidget.running {
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(16, 185, 129, 0.2);
         }
-        #timerWidget.invalid { 
-            border-color: var(--danger); color: var(--danger); 
+        #timerWidget.invalid {
+            border-color: var(--danger); color: var(--danger);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 30px rgba(239, 68, 68, 0.4);
         }
-        #timerWidget.paused { 
-            border-color: var(--warning); color: var(--warning); 
+        #timerWidget.paused {
+            border-color: var(--warning); color: var(--warning);
             box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(245, 158, 11, 0.25);
         }
 
@@ -200,34 +197,33 @@
         #timerWidget.invalid .status-dot { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
 
         .timer-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; }
-        #timerDisplay { 
-            font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 800; 
+        #timerDisplay {
+            font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 800;
             font-variant-numeric: tabular-nums; letter-spacing: -0.5px;
         }
-        
-        .timer-controls { 
+
+        .timer-controls {
             display: flex; gap: 6px; margin-top: 6px; opacity: 0; height: 0; overflow: hidden;
             transition: opacity 0.2s, height 0.2s;
         }
         #timerWidget:hover .timer-controls { opacity: 1; height: 22px; }
-        .timer-btn { 
-            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); 
+        .timer-btn {
+            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1);
             color: #d4d4d8; border-radius: 6px; width: 26px; height: 20px; font-size: 12px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700;
         }
         .timer-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
 
-        /* SETTINGS MODAL - Con Display None quando chiusa così non blocca MAI il centro */
         .modal-overlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(5, 5, 8, 0.75); backdrop-filter: blur(10px); z-index: 200;
             display: none; justify-content: center; align-items: center;
             opacity: 0; pointer-events: none !important; transition: opacity 0.25s ease;
         }
-        .modal-overlay.active { 
-            display: flex; opacity: 1; pointer-events: auto !important; 
+        .modal-overlay.active {
+            display: flex; opacity: 1; pointer-events: auto !important;
         }
-        
+
         .modal-content {
             width: 90%; max-width: 420px; padding: 28px; border-radius: 24px;
             background: rgba(18, 18, 24, 0.92);
@@ -236,14 +232,14 @@
             max-height: 82vh; overflow-y: auto;
             pointer-events: auto !important;
         }
-        
-        .modal-title { 
-            font-size: 20px; font-weight: 900; margin-bottom: 20px; color: white; 
+
+        .modal-title {
+            font-size: 20px; font-weight: 900; margin-bottom: 20px; color: white;
             border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;
             display: flex; align-items: center; justify-content: space-between;
         }
         .modal-subtitle { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); font-weight: 800; }
-        
+
         .setting-row {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 14px; color: #e4e4e7; font-weight: 600; font-size: 14px;
@@ -251,7 +247,6 @@
             border: 1px solid rgba(255,255,255,0.05);
         }
 
-        /* Switch Toggle */
         .switch { position: relative; display: inline-block; width: 46px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #27272a; transition: .3s; border-radius: 26px; border: 1px solid rgba(255,255,255,0.1); }
@@ -259,7 +254,6 @@
         input:checked + .slider { background: linear-gradient(135deg, var(--accent), var(--cyan)); border-color: transparent; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* Keybind Buttons */
         .keybind-btn {
             background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.35);
             color: white; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-family: 'JetBrains Mono', monospace;
@@ -268,15 +262,19 @@
         .keybind-btn:hover { background: rgba(139, 92, 246, 0.25); border-color: var(--accent); }
         .keybind-btn.listening { background: var(--accent); color: white; border-color: white; box-shadow: 0 0 15px var(--accent); }
 
-        .btn-close { 
-            width: 100%; padding: 13px; 
-            background: linear-gradient(135deg, var(--accent), #6366f1); 
+        .btn-close {
+            width: 100%; padding: 13px;
+            background: linear-gradient(135deg, var(--accent), #6366f1);
             color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 14px;
             cursor: pointer; margin-top: 12px; transition: opacity 0.2s, transform 0.1s;
             box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
         }
         .btn-close:hover { opacity: 0.92; }
         .btn-close:active { transform: scale(0.98); }
+
+        .hint-text {
+            font-size: 11px; color: #a1a1aa; margin-top: 8px; font-style: italic;
+        }
     </style>
 
     <script type="text/javascript" src="4399.js"></script>
@@ -297,7 +295,7 @@
     <div class="bg-grid"></div>
 
     <div class="window-container" id="windowContainer">
-        
+
         <div class="loading-screen" id="loadingScreen">
             <div class="loading-title">krokz <span>no coin</span></div>
             <div class="spinner"></div>
@@ -309,9 +307,9 @@
         <div class="ui-overlay">
             <div class="glass-panel logo-badge">
                 <span class="logo-dot"></span>
-                krokz <span class="highlight">no coin</span>
+                krokz <span class="highlight">no coin MOD</span>
             </div>
-            
+
             <div class="top-right-buttons">
                 <button class="btn-icon" id="settingsBtn" title="Settings">
                     <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
@@ -341,11 +339,11 @@
             <div class="modal-content">
                 <div class="modal-title">
                     <span>Configurazione</span>
-                    <span class="modal-subtitle">krokz v2.0</span>
+                    <span class="modal-subtitle">krokz v2.0 MOD</span>
                 </div>
-                
+
                 <div class="setting-row">
-                    <span>Click-start Macro (Tasto 'C')</span>
+                    <span>Auto Restart (prendi coin → nuova run)</span>
                     <label class="switch">
                         <input type="checkbox" id="autoRestartToggle" checked>
                         <span class="slider"></span>
@@ -353,7 +351,23 @@
                 </div>
 
                 <div class="setting-row">
-                    <span>Tasti Custom (WASD)</span>
+                    <span>Potato Graphic (texture sfocate)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="potatoGraphicToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row">
+                    <span>999K Monete/Chiavi/Power-up</span>
+                    <label class="switch">
+                        <input type="checkbox" id="infiniteMoneyToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div class="setting-row">
+                    <span>Click-start Macro (Tasto 'C')</span>
                     <label class="switch">
                         <input type="checkbox" id="customKeysToggle" checked>
                         <span class="slider"></span>
@@ -379,13 +393,16 @@
                     </div>
                 </div>
 
+                <div class="hint-text">Nota: skin e valute sono salvate nei dati Unity (IndexedDB). Il patch tenta di modificarli automaticamente.</div>
+
                 <button class="btn-close" id="closeSettings">Salva & Chiudi</button>
             </div>
         </div>
 
     </div>
 
-    <script type="text/javascript" src="master-loader.js"></script>
+    <script type="text/javascript" src="
+        master-loader.js"></script>
 
     <script>
         const windowContainer = document.getElementById('windowContainer');
@@ -398,14 +415,18 @@
         const timerWidget = document.getElementById('timerWidget');
         const timerDisplay = document.getElementById('timerDisplay');
         const autoRestartToggle = document.getElementById('autoRestartToggle');
+        const potatoGraphicToggle = document.getElementById('potatoGraphicToggle');
+        const infiniteMoneyToggle = document.getElementById('infiniteMoneyToggle');
         const customKeysToggle = document.getElementById('customKeysToggle');
         const keybindContainer = document.getElementById('keybind-container');
         const fpsCounter = document.getElementById('fpsCounter');
 
         // --- 1. SETTINGS E KEYBINDS ---
         let autoRestartEnabled = true;
+        let potatoGraphicEnabled = false;
+        let infiniteMoneyEnabled = true;
         let customKeysEnabled = true;
-        
+
         let keybinds = { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD' };
         const bindBtns = {
             up: document.getElementById('bind-up'), down: document.getElementById('bind-down'),
@@ -425,12 +446,12 @@
         let listeningAction = null;
         for (let action in bindBtns) {
             bindBtns[action].addEventListener('click', function(e) {
-                if (listeningAction) return; 
+                if (listeningAction) return;
                 e.stopPropagation();
                 listeningAction = action;
                 this.classList.add('listening');
                 this.innerText = '...';
-                this.blur(); 
+                this.blur();
             });
         }
 
@@ -444,14 +465,24 @@
         }
 
         settingsBtn.addEventListener('click', function() { settingsModal.classList.add('active'); this.blur(); });
-        closeSettings.addEventListener('click', function() { 
-            settingsModal.classList.remove('active'); 
-            listeningAction = null; 
-            for (let action in bindBtns) bindBtns[action].classList.remove('listening'); 
-            this.blur(); 
+        closeSettings.addEventListener('click', function() {
+            settingsModal.classList.remove('active');
+            listeningAction = null;
+            for (let action in bindBtns) bindBtns[action].classList.remove('listening');
+            this.blur();
         });
-        
+
         autoRestartToggle.addEventListener('change', function(e) { autoRestartEnabled = e.target.checked; this.blur(); });
+        potatoGraphicToggle.addEventListener('change', function(e) {
+            potatoGraphicEnabled = e.target.checked;
+            if (potatoGraphicEnabled) {
+                gameContainer.classList.add('canvas-potato');
+            } else {
+                gameContainer.classList.remove('canvas-potato');
+            }
+            this.blur();
+        });
+        infiniteMoneyToggle.addEventListener('change', function(e) { infiniteMoneyEnabled = e.target.checked; this.blur(); });
         customKeysToggle.addEventListener('change', function(e) {
             customKeysEnabled = e.target.checked;
             keybindContainer.style.opacity = customKeysEnabled ? '1' : '0.4';
@@ -463,20 +494,18 @@
         fullscreenBtn.addEventListener('click', function() {
             windowContainer.classList.toggle('fullscreen');
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
-            this.blur(); 
+            this.blur();
         });
 
         let attempts = 0;
         const gameCheckInterval = setInterval(() => {
             attempts++;
-            
-            // Sposta #game-container dentro #gameContainer appena viene generato
+
             const unityWrapper = document.getElementById('game-container');
             if (unityWrapper && unityWrapper.parentElement !== gameContainer) {
                 gameContainer.appendChild(unityWrapper);
             }
 
-            // Rimuove eventuali overlay pubblicitari invisibili di Poki/4399 che bloccano il centro dello schermo
             document.querySelectorAll('body > div:not(.bg-grid):not(.window-container)').forEach(el => {
                 if (!el.querySelector('canvas')) {
                     el.style.pointerEvents = 'none';
@@ -485,7 +514,6 @@
 
             const canvas = document.querySelector('canvas');
             if (canvas) {
-                // Sincronizza la risoluzione interna di Unity con la dimensione reale per non avere click sfalsati
                 canvas.style.pointerEvents = 'auto';
                 if (!canvas.hasAttribute('data-focus-init')) {
                     canvas.setAttribute('tabindex', '1');
@@ -563,7 +591,7 @@
             timerWidget.classList.remove('invalid', 'paused', 'running');
         }
 
-        // Simula input su Unity Canvas (sia Mouse che Pointer Events)
+        // Simula input su Unity Canvas
         async function runAutoRestartSequence() {
             const canvas = document.querySelector('canvas');
             if (!canvas) return;
@@ -573,7 +601,7 @@
                 const clientX = rect.left + rect.width * xRatio;
                 const clientY = rect.top + rect.height * yRatio;
                 const opts = { clientX, clientY, bubbles: true, cancelable: true, view: window, button: 0, buttons: 1 };
-                
+
                 canvas.dispatchEvent(new PointerEvent('pointerdown', opts));
                 canvas.dispatchEvent(new MouseEvent('mousedown', opts));
                 setTimeout(() => {
@@ -593,19 +621,15 @@
                 }, 30);
             };
 
-            // 1. Pausa in alto a sinistra
-            triggerClick(0.05, 0.08); 
+            triggerClick(0.05, 0.08);
             await new Promise(r => setTimeout(r, 220));
-            
-            // 2. Bottone Home nel menu Pausa
-            triggerClick(0.42, 0.52); 
+
+            triggerClick(0.42, 0.52);
             await new Promise(r => setTimeout(r, 220));
-            
-            // 3. Conferma Leave
+
             triggerClick(0.58, 0.58);
             await new Promise(r => setTimeout(r, 350));
 
-            // 4. Barra Spaziatrice per riavviare subito
             resetTimer();
             pressSpace();
         }
@@ -616,7 +640,7 @@
             cancelAnimationFrame(timerInterval);
             timerWidget.classList.remove('paused', 'running');
             timerWidget.classList.add('invalid');
-            
+
             if (autoRestartEnabled) {
                 runAutoRestartSequence();
             }
@@ -649,13 +673,13 @@
 
         let currentFontSize = 30;
         document.getElementById('btn-resize-up').addEventListener('click', function() {
-            currentFontSize = Math.min(54, currentFontSize + 3); 
-            timerDisplay.style.fontSize = currentFontSize + 'px'; 
+            currentFontSize = Math.min(54, currentFontSize + 3);
+            timerDisplay.style.fontSize = currentFontSize + 'px';
             this.blur();
         });
         document.getElementById('btn-resize-down').addEventListener('click', function() {
-            currentFontSize = Math.max(18, currentFontSize - 3); 
-            timerDisplay.style.fontSize = currentFontSize + 'px'; 
+            currentFontSize = Math.max(18, currentFontSize - 3);
+            timerDisplay.style.fontSize = currentFontSize + 'px';
             this.blur();
         });
 
@@ -673,7 +697,7 @@
             }
 
             if (customKeysEnabled && !settingsModal.classList.contains('active')) {
-                if (e.repeat) return; 
+                if (e.repeat) return;
 
                 let action = null;
                 for (let act in keybinds) {
@@ -707,25 +731,26 @@
             if (window.PokiSDK && window.PokiSDK.gameplayStart && !sdkHooked) {
                 const origStart = window.PokiSDK.gameplayStart;
                 const origStop = window.PokiSDK.gameplayStop;
-                
+
                 window.PokiSDK.gameplayStart = function() {
                     if (timerState === 'paused') window.onGameResumed();
                     else if (timerState === 'idle' || timerState === 'invalid') window.onGameStarted();
                     return origStart.apply(this, arguments);
                 };
-                
+
                 window.PokiSDK.gameplayStop = function() {
                     if (timerState === 'running') window.onGamePaused();
                     return origStop.apply(this, arguments);
                 };
-                
+
                 sdkHooked = true;
                 clearInterval(hookPoki);
             }
         }, 400);
 
-        // --- 8. PATCH 999K SALVATAGGIO ---
+        // --- 8. PATCH 999K VALUTE E SKIN (IndexedDB Unity) ---
         function apply999kHack() {
+            if (!infiniteMoneyEnabled) return;
             try {
                 const req = indexedDB.open('/idbfs');
                 req.onsuccess = function() {
@@ -738,9 +763,11 @@
                         if (cursor) {
                             if (typeof cursor.key === 'string' && cursor.key.includes('player')) {
                                 let content = new TextDecoder().decode(cursor.value.contents);
-                                if (content.includes('"coins"')) {
+                                if (content.includes('"coins"') || content.includes('"keys"') || content.includes('"powerup"')) {
                                     content = content.replace(/"coins":\s*\d+/g, '"coins": 999999');
                                     content = content.replace(/"keys":\s*\d+/g, '"keys": 999999');
+                                    content = content.replace(/"powerup":\s*\d+/g, '"powerup": 999999');
+                                    content = content.replace(/"power_ups":\s*\d+/g, '"power_ups": 999999');
                                     cursor.value.contents = new TextEncoder().encode(content);
                                     cursor.update(cursor.value);
                                 }
