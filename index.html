@@ -215,13 +215,13 @@
             </div>
         </div>
 
-        <!-- SETTINGS MODAL CON KEYBINDS -->
+        <!-- SETTINGS MODAL -->
         <div class="modal-overlay" id="settingsModal">
             <div class="modal-content glass-panel">
                 <div class="modal-title">Settings</div>
                 
                 <div class="setting-row">
-                    <span>Auto Restart on Coin (Press 'C')</span>
+                    <span>Click-start (Press 'C')</span>
                     <label class="switch">
                         <input type="checkbox" id="autoRestartToggle" checked>
                         <span class="slider"></span>
@@ -301,12 +301,13 @@
 
         let listeningAction = null;
         for (let action in bindBtns) {
-            bindBtns[action].addEventListener('click', (e) => {
+            bindBtns[action].addEventListener('click', function(e) {
                 if (listeningAction) return; 
                 e.stopPropagation();
                 listeningAction = action;
-                bindBtns[action].classList.add('listening');
-                bindBtns[action].innerText = 'Press...';
+                this.classList.add('listening');
+                this.innerText = 'Press...';
+                this.blur(); 
             });
         }
 
@@ -319,24 +320,22 @@
             listeningAction = null;
         }
 
-        settingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
-        closeSettings.addEventListener('click', () => {
-            settingsModal.classList.remove('active');
-            listeningAction = null; 
-            for (let action in bindBtns) bindBtns[action].classList.remove('listening');
-        });
+        settingsBtn.addEventListener('click', function() { settingsModal.classList.add('active'); this.blur(); });
+        closeSettings.addEventListener('click', function() { settingsModal.classList.remove('active'); listeningAction = null; for (let action in bindBtns) bindBtns[action].classList.remove('listening'); this.blur(); });
         
-        autoRestartToggle.addEventListener('change', (e) => autoRestartEnabled = e.target.checked);
-        customKeysToggle.addEventListener('change', (e) => {
+        autoRestartToggle.addEventListener('change', function(e) { autoRestartEnabled = e.target.checked; this.blur(); });
+        customKeysToggle.addEventListener('change', function(e) {
             customKeysEnabled = e.target.checked;
             keybindContainer.style.opacity = customKeysEnabled ? '1' : '0.4';
             keybindContainer.style.pointerEvents = customKeysEnabled ? 'auto' : 'none';
+            this.blur();
         });
 
-        // --- 2. FULLSCREEN & CARICAMENTO (Identico all'originale per non spaccare il canvas) ---
-        fullscreenBtn.addEventListener('click', () => {
+        // --- 2. FULLSCREEN & CARICAMENTO ORIGINALE ---
+        fullscreenBtn.addEventListener('click', function() {
             windowContainer.classList.toggle('fullscreen');
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
+            this.blur(); 
         });
 
         let attempts = 0;
@@ -377,7 +376,7 @@
         }
         requestAnimationFrame(updateFPS);
 
-        // --- 4. TIMER LOGIC ---
+        // --- 4. TIMER LOGIC E SCONFITTA SIMULATA ---
         let timerState = 'idle';
         let startTime = 0;
         let elapsedTime = 0;
@@ -429,8 +428,24 @@
             timerWidget.classList.remove('paused');
             
             if (autoRestartEnabled) {
-                // Ricarica la pagina dopo 2 secondi per restartare
-                setTimeout(() => { window.location.reload(); }, 2000);
+                // Tentativo di riavvio simulato usando Unity SendMessage (zero coordinate)
+                let uInstance = window.unityInstance || window.gameInstance || window.unityGame;
+                let success = false;
+                
+                if (uInstance && uInstance.SendMessage) {
+                    try {
+                        uInstance.SendMessage("GameManager", "RestartGame");
+                        uInstance.SendMessage("Player", "Die");
+                        success = true;
+                    } catch(e) {
+                        console.log("Comandi nativi Unity ignorati.");
+                    }
+                }
+                
+                // Se non riusciamo ad agganciarci al codice sorgente, usiamo il fast-reload (lo standard per i no-coin sicuri al 100%)
+                if (!success) {
+                    setTimeout(() => { window.location.reload(); }, 1500);
+                }
             }
         }
 
@@ -462,18 +477,22 @@
         document.addEventListener('mouseup', () => { isDragging = false; });
 
         let currentFontSize = 32;
-        document.getElementById('btn-resize-up').addEventListener('click', () => {
-            currentFontSize += 4; timerDisplay.style.fontSize = currentFontSize + 'px';
+        document.getElementById('btn-resize-up').addEventListener('click', function() {
+            currentFontSize += 4; timerDisplay.style.fontSize = currentFontSize + 'px'; this.blur();
         });
-        document.getElementById('btn-resize-down').addEventListener('click', () => {
-            if (currentFontSize > 16) { currentFontSize -= 4; timerDisplay.style.fontSize = currentFontSize + 'px'; }
+        document.getElementById('btn-resize-down').addEventListener('click', function() {
+            if (currentFontSize > 16) { currentFontSize -= 4; timerDisplay.style.fontSize = currentFontSize + 'px'; } this.blur();
         });
 
         // --- 6. INPUT MAPPING E KEYDOWN ---
         window.addEventListener('keydown', (e) => {
             if (listeningAction) { assignKey(e); return; }
 
-            // Tasto C per dichiarare la sconfitta manuale sulla moneta (No-Coin Fail)
+            if (e.code === 'Space' && document.activeElement && document.activeElement.tagName === 'BUTTON') {
+                document.activeElement.blur();
+            }
+
+            // Tasto C per dichiarare la sconfitta manuale (No-Coin Fail)
             if (e.code === 'KeyC') {
                 window.onCoinCollected();
                 return;
@@ -516,13 +535,12 @@
         // --- 7. EVENTI DI GIOCO (HOOKS) ---
         window.onGameStarted = function() { resetTimer(); startTimer(); };
         window.onGamePaused = function() { pauseTimer(); };
-        window.onGameResumed = function() { startTimer(); }; // Senza countdown
+        window.onGameResumed = function() { startTimer(); };
         window.onCoinCollected = function() { stopTimerWithPenalty(); };
 
-        // --- 8. PATCH POKI SDK (Intercetta in modo sicuro i comandi di pausa/resume del gioco) ---
+        // --- 8. PATCH POKI SDK (Intercetta in modo sicuro i comandi di pausa/resume) ---
         let sdkHooked = false;
         const hookPoki = setInterval(() => {
-            // Controlla finchè la libreria Poki non è caricata e pronta
             if (window.PokiSDK && window.PokiSDK.gameplayStart && !sdkHooked) {
                 const origStart = window.PokiSDK.gameplayStart;
                 const origStop = window.PokiSDK.gameplayStop;
@@ -543,7 +561,7 @@
             }
         }, 500);
 
-        // --- 9. PATCH 999K IN INDEXEDDB (Completamente in background) ---
+        // --- 9. PATCH 999K IN INDEXEDDB ---
         function apply999kHack() {
             try {
                 const req = indexedDB.open('/idbfs');
@@ -570,8 +588,6 @@
                 };
             } catch(e) {}
         }
-        
-        // Lo esegue silenziosamente ogni 10 secondi per fixare i soldi
         setInterval(apply999kHack, 10000);
     </script>
 </body>
