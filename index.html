@@ -59,7 +59,7 @@
             border-radius: 0; border: none; box-shadow: none;
         }
 
-        /* --- FIX DEFINITIVO DEL MOUSE AL CENTRO --- */
+        /* FIX DEFINITIVO DEL MOUSE AL CENTRO */
         #gameContainer, #game-container, #gameContainer div {
             position: absolute !important; top: 0 !important; left: 0 !important;
             width: 100% !important; height: 100% !important; 
@@ -164,7 +164,7 @@
             pointer-events: none !important; backdrop-filter: blur(8px);
         }
 
-        /* TIMER WIDGET PRO */
+        /* TIMER WIDGET */
         #timerWidget {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%); z-index: 30;
             padding: 12px 24px; color: white; cursor: grab;
@@ -187,570 +187,459 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.5), 0 0 25px rgba(245, 158, 11, 0.25);
         }
 
-        .timer-header {
-            display: flex; align-items: center; gap: 6px; margin-bottom: 4px;
-        }
-        .status-dot {
-            width: 7px; height: 7px; border-radius: 50%; background: #71717a;
-            transition: background 0.3s, box-shadow 0.3s;
-        }
+        .timer-header { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #71717a; transition: background 0.3s, box-shadow 0.3s; }
         #timerWidget.running .status-dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
         #timerWidget.paused .status-dot { background: var(--warning); box-shadow: 0 0 8px var(--warning); }
         #timerWidget.invalid .status-dot { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
 
         .timer-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; }
-        #timerDisplay { 
-            font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 800; 
-            font-variant-numeric: tabular-nums; letter-spacing: -0.5px;
-        }
+        #timerDisplay { font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -0.5px; }
         
-        .timer-controls { 
-            display: flex; gap: 6px; margin-top: 6px; opacity: 0; height: 0; overflow: hidden;
-            transition: opacity 0.2s, height 0.2s;
-        }
+        .timer-controls { display: flex; gap: 6px; margin-top: 6px; opacity: 0; height: 0; overflow: hidden; transition: opacity 0.2s, height 0.2s; }
         #timerWidget:hover .timer-controls { opacity: 1; height: 22px; }
-        .timer-btn { 
-            background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); 
-            color: #d4d4d8; border-radius: 6px; width: 26px; height: 20px; font-size: 12px;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; 
-        }
+        .timer-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.1); color: #d4d4d8; border-radius: 6px; width: 26px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 700; }
         .timer-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+/* SETTINGS MODAL */
+.modal-overlay {
+position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+background: rgba(5, 5, 8, 0.75); backdrop-filter: blur(10px); z-index: 200;
+display: none; justify-content: center; align-items: center;
+opacity: 0; pointer-events: none !important; transition: opacity 0.25s ease;
+}
+.modal-overlay.active { display: flex; opacity: 1; pointer-events: auto !important; }
+.modal-content {
+width: 90%; max-width: 420px; padding: 28px; border-radius: 24px;
+background: rgba(18, 18, 24, 0.92);
+border: 1px solid rgba(139, 92, 246, 0.3);
+box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(139, 92, 246, 0.15);
+max-height: 82vh; overflow-y: auto;
+pointer-events: auto !important;
+}
+.modal-title {
+font-size: 20px; font-weight: 900; margin-bottom: 20px; color: white;
+border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;
+display: flex; align-items: center; justify-content: space-between;
+}
+.modal-subtitle { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); font-weight: 800; }
+.setting-row {
+display: flex; justify-content: space-between; align-items: center;
+margin-bottom: 14px; color: #e4e4e7; font-weight: 600; font-size: 14px;
+background: rgba(255,255,255,0.03); padding: 10px 14px; border-radius: 12px;
+border: 1px solid rgba(255,255,255,0.05);
+}
+.switch { position: relative; display: inline-block; width: 46px; height: 26px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #27272a; transition: .3s; border-radius: 26px; border: 1px solid rgba(255,255,255,0.1); }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+input:checked + .slider { background: linear-gradient(135deg, var(--accent), var(--cyan)); border-color: transparent; }
+input:checked + .slider:before { transform: translateX(20px); }
+.keybind-btn {
+background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.35);
+color: white; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-family: 'JetBrains Mono', monospace;
+cursor: pointer; transition: all 0.2s; min-width: 64px; text-align: center; font-size: 13px;
+}
+.keybind-btn:hover { background: rgba(139, 92, 246, 0.25); border-color: var(--accent); }
+.keybind-btn.listening { background: var(--accent); color: white; border-color: white; box-shadow: 0 0 15px var(--accent); }
+.btn-close {
+width: 100%; padding: 13px;
+background: linear-gradient(135deg, var(--accent), #6366f1);
+color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 14px;
+cursor: pointer; margin-top: 12px; transition: opacity 0.2s, transform 0.1s;
+box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+}
+.btn-close:hover { opacity: 0.92; }
+.btn-close:active { transform: scale(0.98); }
+window.config = {
+loader: 'unity', debug: false, maxRatio: 16 / 9, minRatio: 9 / 16, title: 'Subway Surfers',
+unityVersion: '2019.4.18f1', unityWebglBuildUrl: 'Build/SanFrancisco.json', fileSize: 35,
+cachedDecompressedFileSizes: {
+'SanFrancisco.asm.code.unityweb': 9077143, 'SanFrancisco.asm.framework.unityweb': 86369,
+'SanFrancisco.asm.memory.unityweb': 951447, 'SanFrancisco.data.unityweb': 18323917,
+'SanFrancisco.wasm.code.unityweb': 7279617, 'SanFrancisco.wasm.framework.unityweb': 90693
+}
+};
+// --- INTERCETTAZIONE RETE & MEMORIA COMPILATA UNITY ---
+(function() {
+// Bypass degli errori di salvataggio HTTP 404 e iniezione dinamica nei file caricati
+const originalFetch = window.fetch;
+window.fetch = async function(...args) {
+const url = args[0] || "";
+if (typeof url === 'string' && (url.includes('onlinesettings') || url.includes('settings') || url.includes('.json'))) {
+// Creiamo una risposta fittizia valida per evitare l'errore bloccante della build Unity
+const mockData = {
+"wallet": {
+"currencies": {
+"1": { "value": 999000, "expirationType": 0 },
+"2": { "value": 999000, "expirationType": 0 },
+"3": { "value": 999000, "expirationType": 0 }
+}
+},
+"scores": { "topScore": 0 },
+"version": 3
+};
+return new Response(JSON.stringify(mockData), {
+status: 200,
+statusText: 'OK',
+headers: { 'Content-Type': 'application/json' }
+});
+}
+return originalFetch(...args);
+};
+// Iniezione preventiva nello storage temporaneo
+try {
+let state = {
+wallet: {
+currencies: {
+"1": { value: 999000, expirationType: 0 },
+"2": { value: 999000, expirationType: 0 },
+"3": { value: 999000, expirationType: 0 }
+}
+}
+};
+localStorage.setItem('sys-save-state', JSON.stringify(state));
+} catch(e){}
+// Scansione attiva e patch dinamica in tempo reale dell'Heap WebGL di Unity
+setInterval(() => {
+try {
+const moduleInstance = window.unityInstance || window.Module;
+if (moduleInstance && moduleInstance.HEAPU8) {
+const heap = moduleInstance.HEAPU8;
+const decoder = new TextDecoder('utf-8');
+const encoder = new TextEncoder();
+// Scansione della RAM a blocchi per trovare le chiavi strutturate
+for (let i = 0; i < heap.length; i += 250000) {
+const chunk = heap.subarray(i, i + 300000);
+const textStr = decoder.decode(chunk);
+if (textStr.includes('"coins":')) {
+const regex = /"coins":\s*(\d+)/g;
+let match;
+while ((match = regex.exec(textStr)) !== null) {
+const absoluteIndex = i + match.index;
+const patchedBytes = encoder.encode('"coins":999000');
+for (let j = 0; j < patchedBytes.length; j++) {
+heap[absoluteIndex + j] = patchedBytes[j];
+}
+}
+}
+}
+}
+} catch(err){}
+}, 1500);
+})();
 
-        /* SETTINGS MODAL - Con Display None quando chiusa così non blocca MAI il centro */
-        .modal-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 8, 0.75); backdrop-filter: blur(10px); z-index: 200;
-            display: none; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none !important; transition: opacity 0.25s ease;
-        }
-        .modal-overlay.active { 
-            display: flex; opacity: 1; pointer-events: auto !important; 
-        }
-        
-        .modal-content {
-            width: 90%; max-width: 420px; padding: 28px; border-radius: 24px;
-            background: rgba(18, 18, 24, 0.92);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            box-shadow: 0 25px 60px rgba(0,0,0,0.8), 0 0 40px rgba(139, 92, 246, 0.15);
-            max-height: 82vh; overflow-y: auto;
-            pointer-events: auto !important;
-        }
-        
-        .modal-title { 
-            font-size: 20px; font-weight: 900; margin-bottom: 20px; color: white; 
-            border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;
-            display: flex; align-items: center; justify-content: space-between;
-        }
-        .modal-subtitle { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--accent); font-weight: 800; }
-        
-        .setting-row {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 14px; color: #e4e4e7; font-weight: 600; font-size: 14px;
-            background: rgba(255,255,255,0.03); padding: 10px 14px; border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.05);
-        }
 
-        /* Switch Toggle */
-        .switch { position: relative; display: inline-block; width: 46px; height: 26px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #27272a; transition: .3s; border-radius: 26px; border: 1px solid rgba(255,255,255,0.1); }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
-        input:checked + .slider { background: linear-gradient(135deg, var(--accent), var(--cyan)); border-color: transparent; }
-        input:checked + .slider:before { transform: translateX(20px); }
+krokz no coin
 
-        /* Keybind Buttons */
-        .keybind-btn {
-            background: rgba(139, 92, 246, 0.12); border: 1px solid rgba(139, 92, 246, 0.35);
-            color: white; padding: 6px 14px; border-radius: 8px; font-weight: 800; font-family: 'JetBrains Mono', monospace;
-            cursor: pointer; transition: all 0.2s; min-width: 64px; text-align: center; font-size: 13px;
-        }
-        .keybind-btn:hover { background: rgba(139, 92, 246, 0.25); border-color: var(--accent); }
-        .keybind-btn.listening { background: var(--accent); color: white; border-color: white; box-shadow: 0 0 15px var(--accent); }
+Loading Subway Engine...
+krokz no coin
+60 FPS
+No Coin Timer
 
-        .btn-close { 
-            width: 100%; padding: 13px; 
-            background: linear-gradient(135deg, var(--accent), #6366f1); 
-            color: white; border: none; border-radius: 12px; font-weight: 800; font-size: 14px;
-            cursor: pointer; margin-top: 12px; transition: opacity 0.2s, transform 0.1s;
-            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
-        }
-        .btn-close:hover { opacity: 0.92; }
-        .btn-close:active { transform: scale(0.98); }
-    </style>
+00:00:000
 
-    <script type="text/javascript" src="4399.js"></script>
-    <script>
-        window.config = {
-            loader: 'unity', debug: false, maxRatio: 16 / 9, minRatio: 9 / 16, title: 'Subway Surfers',
-            unityVersion: '2019.4.18f1', unityWebglBuildUrl: 'Build/SanFrancisco.json', fileSize: 35,
-            cachedDecompressedFileSizes: {
-                'SanFrancisco.asm.code.unityweb': 9077143, 'SanFrancisco.asm.framework.unityweb': 86369,
-                'SanFrancisco.asm.memory.unityweb': 951447, 'SanFrancisco.data.unityweb': 18323917,
-                'SanFrancisco.wasm.code.unityweb': 7279617, 'SanFrancisco.wasm.framework.unityweb': 90693
-            }
-        };
-    </script>
-</head>
-<body>
+-
++
 
-    <div class="bg-grid"></div>
+Configurazione
+krokz v2.0
+Click-start Macro (Tasto 'C')
+Tasti Custom (WASD)
+Salta (Up)
+W
 
-    <div class="window-container" id="windowContainer">
-        
-        <div class="loading-screen" id="loadingScreen">
-            <div class="loading-title">krokz <span>no coin</span></div>
-            <div class="spinner"></div>
-            <div class="loading-text">Loading Subway Engine...</div>
-        </div>
 
-        <div id="gameContainer"></div>
+Rotola (Down)
+S
 
-        <div class="ui-overlay">
-            <div class="glass-panel logo-badge">
-                <span class="logo-dot"></span>
-                krokz <span class="highlight">no coin</span>
-            </div>
-            
-            <div class="top-right-buttons">
-                <button class="btn-icon" id="settingsBtn" title="Settings">
-                    <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
-                </button>
-                <button class="btn-icon" id="fullscreenBtn" title="Toggle Fullscreen">
-                    <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-                </button>
-            </div>
-        </div>
 
-        <div id="fpsCounter">60 FPS</div>
+Sinistra (Left)
+A
 
-        <div id="timerWidget" class="glass-panel">
-            <div class="timer-header">
-                <span class="status-dot"></span>
-                <span class="timer-label">No Coin Timer</span>
-            </div>
-            <div id="timerDisplay">00:00:000</div>
-            <div class="timer-controls">
-                <button class="timer-btn" id="btn-resize-down">-</button>
-                <button class="timer-btn" id="btn-resize-up">+</button>
-            </div>
-        </div>
 
-        <!-- SETTINGS MODAL -->
-        <div class="modal-overlay" id="settingsModal">
-            <div class="modal-content">
-                <div class="modal-title">
-                    <span>Configurazione</span>
-                    <span class="modal-subtitle">krokz v2.0</span>
-                </div>
-                
-                <div class="setting-row">
-                    <span>Click-start Macro (Tasto 'C')</span>
-                    <label class="switch">
-                        <input type="checkbox" id="autoRestartToggle" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
+Destra (Right)
+D
 
-                <div class="setting-row">
-                    <span>Tasti Custom (WASD)</span>
-                    <label class="switch">
-                        <input type="checkbox" id="customKeysToggle" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
+Salva & Chiudi
 
-                <div id="keybind-container" style="transition: opacity 0.3s; margin-top: 10px;">
-                    <div class="setting-row">
-                        <span>Salta (Up)</span>
-                        <button class="keybind-btn" id="bind-up">W</button>
-                    </div>
-                    <div class="setting-row">
-                        <span>Rotola (Down)</span>
-                        <button class="keybind-btn" id="bind-down">S</button>
-                    </div>
-                    <div class="setting-row">
-                        <span>Sinistra (Left)</span>
-                        <button class="keybind-btn" id="bind-left">A</button>
-                    </div>
-                    <div class="setting-row">
-                        <span>Destra (Right)</span>
-                        <button class="keybind-btn" id="bind-right">D</button>
-                    </div>
-                </div>
-
-                <button class="btn-close" id="closeSettings">Salva & Chiudi</button>
-            </div>
-        </div>
-
-    </div>
-
-    <script type="text/javascript" src="master-loader.js"></script>
-
-    <script>
-        const windowContainer = document.getElementById('windowContainer');
-        const gameContainer = document.getElementById('gameContainer');
-        const fullscreenBtn = document.getElementById('fullscreenBtn');
-        const settingsBtn = document.getElementById('settingsBtn');
-        const settingsModal = document.getElementById('settingsModal');
-        const closeSettings = document.getElementById('closeSettings');
-        const loadingScreen = document.getElementById('loadingScreen');
-        const timerWidget = document.getElementById('timerWidget');
-        const timerDisplay = document.getElementById('timerDisplay');
-        const autoRestartToggle = document.getElementById('autoRestartToggle');
-        const customKeysToggle = document.getElementById('customKeysToggle');
-        const keybindContainer = document.getElementById('keybind-container');
-        const fpsCounter = document.getElementById('fpsCounter');
-
-        // --- 1. SETTINGS E KEYBINDS ---
-        let autoRestartEnabled = true;
-        let customKeysEnabled = true;
-        
-        let keybinds = { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD' };
-        const bindBtns = {
-            up: document.getElementById('bind-up'), down: document.getElementById('bind-down'),
-            left: document.getElementById('bind-left'), right: document.getElementById('bind-right')
-        };
-
-        function formatKeyName(code) {
-            if (code.startsWith('Key')) return code.replace('Key', '');
-            if (code.startsWith('Arrow')) return code.replace('Arrow', '');
-            if (code.startsWith('Digit')) return code.replace('Digit', '');
-            if (code === 'Space') return 'SPACE';
-            return code;
-        }
-
-        for (let action in keybinds) { bindBtns[action].innerText = formatKeyName(keybinds[action]); }
-
-        let listeningAction = null;
-        for (let action in bindBtns) {
-            bindBtns[action].addEventListener('click', function(e) {
-                if (listeningAction) return; 
-                e.stopPropagation();
-                listeningAction = action;
-                this.classList.add('listening');
-                this.innerText = '...';
-                this.blur(); 
-            });
-        }
-
-        function assignKey(e) {
-            if (!listeningAction) return;
-            e.preventDefault(); e.stopPropagation();
-            keybinds[listeningAction] = e.code;
-            bindBtns[listeningAction].classList.remove('listening');
-            bindBtns[listeningAction].innerText = formatKeyName(e.code);
-            listeningAction = null;
-        }
-
-        settingsBtn.addEventListener('click', function() { settingsModal.classList.add('active'); this.blur(); });
-        closeSettings.addEventListener('click', function() { 
-            settingsModal.classList.remove('active'); 
-            listeningAction = null; 
-            for (let action in bindBtns) bindBtns[action].classList.remove('listening'); 
-            this.blur(); 
-        });
-        
-        autoRestartToggle.addEventListener('change', function(e) { autoRestartEnabled = e.target.checked; this.blur(); });
-        customKeysToggle.addEventListener('change', function(e) {
-            customKeysEnabled = e.target.checked;
-            keybindContainer.style.opacity = customKeysEnabled ? '1' : '0.4';
-            keybindContainer.style.pointerEvents = customKeysEnabled ? 'auto' : 'none';
-            this.blur();
-        });
-
-        // --- 2. FULLSCREEN & SBLOCCO TOTALE DEL CANVAS ---
-        fullscreenBtn.addEventListener('click', function() {
-            windowContainer.classList.toggle('fullscreen');
-            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
-            this.blur(); 
-        });
-
-        let attempts = 0;
-        const gameCheckInterval = setInterval(() => {
-            attempts++;
-            
-            // Sposta #game-container dentro #gameContainer appena viene generato
-            const unityWrapper = document.getElementById('game-container');
-            if (unityWrapper && unityWrapper.parentElement !== gameContainer) {
-                gameContainer.appendChild(unityWrapper);
-            }
-
-            // Rimuove eventuali overlay pubblicitari invisibili di Poki/4399 che bloccano il centro dello schermo
-            document.querySelectorAll('body > div:not(.bg-grid):not(.window-container)').forEach(el => {
-                if (!el.querySelector('canvas')) {
-                    el.style.pointerEvents = 'none';
-                }
-            });
-
-            const canvas = document.querySelector('canvas');
-            if (canvas) {
-                // Sincronizza la risoluzione interna di Unity con la dimensione reale per non avere click sfalsati
-                canvas.style.pointerEvents = 'auto';
-                if (!canvas.hasAttribute('data-focus-init')) {
-                    canvas.setAttribute('tabindex', '1');
-                    canvas.setAttribute('data-focus-init', 'true');
-                    canvas.focus();
-                    canvas.addEventListener('pointerdown', () => canvas.focus());
-                    window.dispatchEvent(new Event('resize'));
-                }
-                if (attempts > 4 && loadingScreen) {
-                    loadingScreen.classList.add('hidden');
-                    setTimeout(() => { if (loadingScreen && loadingScreen.parentNode) loadingScreen.remove(); }, 500);
-                }
-            }
-            if (attempts > 40) clearInterval(gameCheckInterval);
-        }, 400);
-
-        // --- 3. FPS COUNTER ---
-        let lastFrameTime = performance.now();
-        let frames = 0;
-        function updateFPS() {
-            frames++;
-            const now = performance.now();
-            if (now - lastFrameTime >= 1000) {
-                fpsCounter.innerText = `${frames} FPS`;
-                frames = 0;
-                lastFrameTime = now;
-            }
-            requestAnimationFrame(updateFPS);
-        }
-        requestAnimationFrame(updateFPS);
-
-        // --- 4. TIMER LOGIC E MACRO CLICK-START ---
-        let timerState = 'idle';
-        let startTime = 0;
-        let elapsedTime = 0;
-        let timerInterval;
-
-        function formatTime(ms) {
-            const minutes = String(Math.floor(ms / 60000)).padStart(2, '0');
-            const seconds = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
-            const milliseconds = String(Math.floor(ms % 1000)).padStart(3, '0');
-            return `${minutes}:${seconds}:${milliseconds}`;
-        }
-
-        function updateTimer() {
-            if (timerState !== 'running') return;
-            elapsedTime = performance.now() - startTime;
-            timerDisplay.innerText = formatTime(elapsedTime);
-            timerInterval = requestAnimationFrame(updateTimer);
-        }
-
-        function startTimer() {
-            if (timerState === 'running') return;
-            timerState = 'running';
-            timerWidget.classList.remove('invalid', 'paused');
-            timerWidget.classList.add('running');
-            startTime = performance.now() - elapsedTime;
-            cancelAnimationFrame(timerInterval);
-            timerInterval = requestAnimationFrame(updateTimer);
-        }
-
-        function pauseTimer() {
-            if (timerState !== 'running') return;
-            timerState = 'paused';
-            cancelAnimationFrame(timerInterval);
-            timerWidget.classList.remove('running');
-            timerWidget.classList.add('paused');
-        }
-
-        function resetTimer() {
-            timerState = 'idle';
-            elapsedTime = 0;
-            cancelAnimationFrame(timerInterval);
-            timerDisplay.innerText = "00:00:000";
-            timerWidget.classList.remove('invalid', 'paused', 'running');
-        }
-
-        // Simula input su Unity Canvas (sia Mouse che Pointer Events)
-        async function runAutoRestartSequence() {
-            const canvas = document.querySelector('canvas');
-            if (!canvas) return;
-
-            const triggerClick = (xRatio, yRatio) => {
-                const rect = canvas.getBoundingClientRect();
-                const clientX = rect.left + rect.width * xRatio;
-                const clientY = rect.top + rect.height * yRatio;
-                const opts = { clientX, clientY, bubbles: true, cancelable: true, view: window, button: 0, buttons: 1 };
-                
-                canvas.dispatchEvent(new PointerEvent('pointerdown', opts));
-                canvas.dispatchEvent(new MouseEvent('mousedown', opts));
-                setTimeout(() => {
-                    canvas.dispatchEvent(new PointerEvent('pointerup', opts));
-                    canvas.dispatchEvent(new MouseEvent('mouseup', opts));
-                    canvas.dispatchEvent(new MouseEvent('click', opts));
-                }, 25);
-            };
-
-            const pressSpace = () => {
-                const kOpts = { code: 'Space', key: ' ', keyCode: 32, which: 32, bubbles: true };
-                canvas.dispatchEvent(new KeyboardEvent('keydown', kOpts));
-                document.dispatchEvent(new KeyboardEvent('keydown', kOpts));
-                setTimeout(() => {
-                    canvas.dispatchEvent(new KeyboardEvent('keyup', kOpts));
-                    document.dispatchEvent(new KeyboardEvent('keyup', kOpts));
-                }, 30);
-            };
-
-            // 1. Pausa in alto a sinistra
-            triggerClick(0.05, 0.08); 
-            await new Promise(r => setTimeout(r, 220));
-            
-            // 2. Bottone Home nel menu Pausa
-            triggerClick(0.42, 0.52); 
-            await new Promise(r => setTimeout(r, 220));
-            
-            // 3. Conferma Leave
-            triggerClick(0.58, 0.58);
-            await new Promise(r => setTimeout(r, 350));
-
-            // 4. Barra Spaziatrice per riavviare subito
-            resetTimer();
-            pressSpace();
-        }
-
-        function stopTimerWithPenalty() {
-            if (timerState !== 'running') return;
-            timerState = 'invalid';
-            cancelAnimationFrame(timerInterval);
-            timerWidget.classList.remove('paused', 'running');
-            timerWidget.classList.add('invalid');
-            
-            if (autoRestartEnabled) {
-                runAutoRestartSequence();
-            }
-        }
-
-        // --- 5. DRAG & RESIZE DEL TIMER ---
-        let isDragging = false, offsetX = 0, offsetY = 0;
-        timerWidget.addEventListener('mousedown', (e) => {
-            if (e.target.tagName === 'BUTTON') return;
-            isDragging = true;
-            const rect = timerWidget.getBoundingClientRect();
-            const parentRect = windowContainer.getBoundingClientRect();
-            offsetX = e.clientX - rect.left;
-            offsetY = e.clientY - rect.top;
-            timerWidget.style.transform = 'none';
-            timerWidget.style.left = (rect.left - parentRect.left) + 'px';
-            timerWidget.style.top = (rect.top - parentRect.top) + 'px';
-        });
-        document.addEventListener('mousemove', (e) => {
-            if (!isDragging) return;
-            const parentRect = windowContainer.getBoundingClientRect();
-            let newX = e.clientX - parentRect.left - offsetX;
-            let newY = e.clientY - parentRect.top - offsetY;
-            newX = Math.max(10, Math.min(newX, parentRect.width - timerWidget.offsetWidth - 10));
-            newY = Math.max(10, Math.min(newY, parentRect.height - timerWidget.offsetHeight - 10));
-            timerWidget.style.left = newX + 'px';
-            timerWidget.style.top = newY + 'px';
-        });
-        document.addEventListener('mouseup', () => { isDragging = false; });
-
-        let currentFontSize = 30;
-        document.getElementById('btn-resize-up').addEventListener('click', function() {
-            currentFontSize = Math.min(54, currentFontSize + 3); 
-            timerDisplay.style.fontSize = currentFontSize + 'px'; 
-            this.blur();
-        });
-        document.getElementById('btn-resize-down').addEventListener('click', function() {
-            currentFontSize = Math.max(18, currentFontSize - 3); 
-            timerDisplay.style.fontSize = currentFontSize + 'px'; 
-            this.blur();
-        });
-
-        // --- 6. INPUT TASTIERA ---
-        window.addEventListener('keydown', (e) => {
-            if (listeningAction) { assignKey(e); return; }
-
-            if (e.code === 'Space' && document.activeElement && document.activeElement.tagName === 'BUTTON') {
-                document.activeElement.blur();
-            }
-
-            if (e.code === 'KeyC') {
-                window.onCoinCollected();
-                return;
-            }
-
-            if (customKeysEnabled && !settingsModal.classList.contains('active')) {
-                if (e.repeat) return; 
-
-                let action = null;
-                for (let act in keybinds) {
-                    if (e.code === keybinds[act]) { action = act; break; }
-                }
-
-                if (action) {
-                    e.preventDefault(); e.stopPropagation();
-
-                    const arrowMap = { up: ['ArrowUp', 38], down: ['ArrowDown', 40], left: ['ArrowLeft', 37], right: ['ArrowRight', 39] };
-                    const [arrowCode, keyCode] = arrowMap[action];
-
-                    const downEvent = new KeyboardEvent('keydown', { key: arrowCode, code: arrowCode, keyCode, which: keyCode, bubbles: true, cancelable: true });
-                    const upEvent = new KeyboardEvent('keyup', { key: arrowCode, code: arrowCode, keyCode, which: keyCode, bubbles: true, cancelable: true });
-
-                    const canvas = document.querySelector('canvas');
-                    if (canvas) { canvas.dispatchEvent(downEvent); canvas.dispatchEvent(upEvent); }
-                    document.dispatchEvent(downEvent); document.dispatchEvent(upEvent);
-                }
-            }
-        });
-
-        // --- 7. HOOKS POKI SDK ---
-        window.onGameStarted = function() { resetTimer(); startTimer(); };
-        window.onGamePaused = function() { pauseTimer(); };
-        window.onGameResumed = function() { startTimer(); };
-        window.onCoinCollected = function() { stopTimerWithPenalty(); };
-
-        let sdkHooked = false;
-        const hookPoki = setInterval(() => {
-            if (window.PokiSDK && window.PokiSDK.gameplayStart && !sdkHooked) {
-                const origStart = window.PokiSDK.gameplayStart;
-                const origStop = window.PokiSDK.gameplayStop;
-                
-                window.PokiSDK.gameplayStart = function() {
-                    if (timerState === 'paused') window.onGameResumed();
-                    else if (timerState === 'idle' || timerState === 'invalid') window.onGameStarted();
-                    return origStart.apply(this, arguments);
-                };
-                
-                window.PokiSDK.gameplayStop = function() {
-                    if (timerState === 'running') window.onGamePaused();
-                    return origStop.apply(this, arguments);
-                };
-                
-                sdkHooked = true;
-                clearInterval(hookPoki);
-            }
-        }, 400);
-
-        // --- 8. PATCH 999K SALVATAGGIO ---
-        function apply999kHack() {
-            try {
-                const req = indexedDB.open('/idbfs');
-                req.onsuccess = function() {
-                    const db = req.result;
-                    if (!db.objectStoreNames.contains('FILE_DATA')) return;
-                    const tx = db.transaction('FILE_DATA', 'readwrite');
-                    const store = tx.objectStore('FILE_DATA');
-                    store.openCursor().onsuccess = function(e) {
-                        const cursor = e.target.result;
-                        if (cursor) {
-                            if (typeof cursor.key === 'string' && cursor.key.includes('player')) {
-                                let content = new TextDecoder().decode(cursor.value.contents);
-                                if (content.includes('"coins"')) {
-                                    content = content.replace(/"coins":\s*\d+/g, '"coins": 999999');
-                                    content = content.replace(/"keys":\s*\d+/g, '"keys": 999999');
-                                    cursor.value.contents = new TextEncoder().encode(content);
-                                    cursor.update(cursor.value);
-                                }
-                            }
-                            cursor.continue();
-                        }
-                    };
-                };
-            } catch(e) {}
-        }
-        setInterval(apply999kHack, 10000);
-    </script>
-</body>
-</html>
+const windowContainer = document.getElementById('windowContainer');
+const gameContainer = document.getElementById('gameContainer');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const closeSettings = document.getElementById('closeSettings');
+const loadingScreen = document.getElementById('loadingScreen');
+const timerWidget = document.getElementById('timerWidget');
+const timerDisplay = document.getElementById('timerDisplay');
+const autoRestartToggle = document.getElementById('autoRestartToggle');
+const customKeysToggle = document.getElementById('customKeysToggle');
+const keybindContainer = document.getElementById('keybind-container');
+const fpsCounter = document.getElementById('fpsCounter');
+// --- 1. SETTINGS E KEYBINDS ---
+let autoRestartEnabled = true;
+let customKeysEnabled = true;
+let keybinds = { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD' };
+const bindBtns = {
+up: document.getElementById('bind-up'), down: document.getElementById('bind-down'),
+left: document.getElementById('bind-left'), right: document.getElementById('bind-right')
+};
+function formatKeyName(code) {
+if (code.startsWith('Key')) return code.replace('Key', '');
+if (code.startsWith('Arrow')) return code.replace('Arrow', '');
+if (code.startsWith('Digit')) return code.replace('Digit', '');
+if (code === 'Space') return 'SPACE';
+return code;
+}
+for (let action in keybinds) { bindBtns[action].innerText = formatKeyName(keybinds[action]); }
+let listeningAction = null;
+for (let action in bindBtns) {
+bindBtns[action].addEventListener('click', function(e) {
+if (listeningAction) return;
+e.stopPropagation();
+listeningAction = action;
+this.classList.add('listening');
+this.innerText = '...';
+this.blur();
+});
+}
+function assignKey(e) {
+if (!listeningAction) return;
+e.preventDefault(); e.stopPropagation();
+keybinds[listeningAction] = e.code;
+bindBtns[listeningAction].classList.remove('listening');
+bindBtns[listeningAction].innerText = formatKeyName(e.code);
+listeningAction = null;
+}
+settingsBtn.addEventListener('click', function() { settingsModal.classList.add('active'); this.blur(); });
+closeSettings.addEventListener('click', function() {
+settingsModal.classList.remove('active');
+listeningAction = null;
+for (let action in bindBtns) bindBtns[action].classList.remove('listening');
+this.blur();
+});
+autoRestartToggle.addEventListener('change', function(e) { autoRestartEnabled = e.target.checked; this.blur(); });
+customKeysToggle.addEventListener('change', function(e) {
+customKeysEnabled = e.target.checked;
+keybindContainer.style.opacity = customKeysEnabled ? '1' : '0.4';
+keybindContainer.style.pointerEvents = customKeysEnabled ? 'auto' : 'none';
+this.blur();
+});
+// --- 2. FULLSCREEN & SBLOCCO TOTALE DEL CANVAS ---
+fullscreenBtn.addEventListener('click', function() {
+windowContainer.classList.toggle('fullscreen');
+setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
+this.blur();
+});
+let attempts = 0;
+const gameCheckInterval = setInterval(() => {
+attempts++;
+const unityWrapper = document.getElementById('game-container');
+if (unityWrapper && unityWrapper.parentElement !== gameContainer) {
+gameContainer.appendChild(unityWrapper);
+}
+document.querySelectorAll('body > div:not(.bg-grid):not(.window-container)').forEach(el => {
+if (!el.querySelector('canvas')) {
+el.style.pointerEvents = 'none';
+}
+});
+const canvas = document.querySelector('canvas');
+if (canvas) {
+canvas.style.pointerEvents = 'auto';
+if (!canvas.hasAttribute('data-focus-init')) {
+canvas.setAttribute('tabindex', '1');
+canvas.setAttribute('data-focus-init', 'true');
+canvas.focus();
+canvas.addEventListener('pointerdown', () => canvas.focus());
+window.dispatchEvent(new Event('resize'));
+}
+if (attempts > 4 && loadingScreen) {
+loadingScreen.classList.add('hidden');
+setTimeout(() => { if (loadingScreen && loadingScreen.parentNode) loadingScreen.remove(); }, 500);
+}
+}
+if (attempts > 40) clearInterval(gameCheckInterval);
+}, 400);
+// --- 3. FPS COUNTER ---
+let lastFrameTime = performance.now();
+let frames = 0;
+function updateFPS() {
+frames++;
+const now = performance.now();
+if (now - lastFrameTime >= 1000) {
+fpsCounter.innerText = ${frames} FPS;
+frames = 0;
+lastFrameTime = now;
+}
+requestAnimationFrame(updateFPS);
+}
+requestAnimationFrame(updateFPS);
+// --- 4. TIMER LOGIC E MACRO CLICK-START ---
+let timerState = 'idle';
+let startTime = 0;
+let elapsedTime = 0;
+let timerInterval;
+function formatTime(ms) {
+const minutes = String(Math.floor(ms / 60000)).padStart(2, '0');
+const seconds = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
+const milliseconds = String(Math.floor(ms % 1000)).padStart(3, '0');
+return ${minutes}:${seconds}:${milliseconds};
+}
+function updateTimer() {
+if (timerState !== 'running') return;
+elapsedTime = performance.now() - startTime;
+timerDisplay.innerText = formatTime(elapsedTime);
+timerInterval = requestAnimationFrame(updateTimer);
+}
+function startTimer() {
+if (timerState === 'running') return;
+timerState = 'running';
+timerWidget.classList.remove('invalid', 'paused');
+timerWidget.classList.add('running');
+startTime = performance.now() - elapsedTime;
+cancelAnimationFrame(timerInterval);
+timerInterval = requestAnimationFrame(updateTimer);
+}
+function pauseTimer() {
+if (timerState !== 'running') return;
+timerState = 'paused';
+cancelAnimationFrame(timerInterval);
+timerWidget.classList.remove('running');
+timerWidget.classList.add('paused');
+}
+function resetTimer() {
+timerState = 'idle';
+elapsedTime = 0;
+cancelAnimationFrame(timerInterval);
+timerDisplay.innerText = "00:00:000";
+timerWidget.classList.remove('invalid', 'paused', 'running');
+}
+async function runAutoRestartSequence() {
+const canvas = document.querySelector('canvas');
+if (!canvas) return;
+const triggerClick = (xRatio, yRatio) => {
+const rect = canvas.getBoundingClientRect();
+const clientX = rect.left + rect.width * xRatio;
+const clientY = rect.top + rect.height * yRatio;
+const opts = { clientX, clientY, bubbles: true, cancelable: true, view: window, button: 0, buttons: 1 };
+canvas.dispatchEvent(new PointerEvent('pointerdown', opts));
+canvas.dispatchEvent(new MouseEvent('mousedown', opts));
+setTimeout(() => {
+canvas.dispatchEvent(new PointerEvent('pointerup', opts));
+canvas.dispatchEvent(new MouseEvent('mouseup', opts));
+canvas.dispatchEvent(new MouseEvent('click', opts));
+}, 25);
+};
+const pressSpace = () => {
+const kOpts = { code: 'Space', key: ' ', keyCode: 32, which: 32, bubbles: true };
+canvas.dispatchEvent(new KeyboardEvent('keydown', kOpts));
+document.dispatchEvent(new KeyboardEvent('keydown', kOpts));
+setTimeout(() => {
+canvas.dispatchEvent(new KeyboardEvent('keyup', kOpts));
+document.dispatchEvent(new KeyboardEvent('keyup', kOpts));
+}, 30);
+};
+triggerClick(0.05, 0.08);
+await new Promise(r => setTimeout(r, 220));
+triggerClick(0.42, 0.52);
+await new Promise(r => setTimeout(r, 220));
+triggerClick(0.58, 0.58);
+await new Promise(r => setTimeout(r, 350));
+resetTimer();
+pressSpace();
+}
+function stopTimerWithPenalty() {
+if (timerState !== 'running') return;
+timerState = 'invalid';
+cancelAnimationFrame(timerInterval);
+timerWidget.classList.remove('paused', 'running');
+timerWidget.classList.add('invalid');
+if (autoRestartEnabled) {
+runAutoRestartSequence();
+}
+}
+// --- 5. DRAG & RESIZE DEL TIMER ---
+let isDragging = false, offsetX = 0, offsetY = 0;
+timerWidget.addEventListener('mousedown', (e) => {
+if (e.target.tagName === 'BUTTON') return;
+isDragging = true;
+const rect = timerWidget.getBoundingClientRect();
+const parentRect = windowContainer.getBoundingClientRect();
+offsetX = e.clientX - rect.left;
+offsetY = e.clientY - rect.top;
+timerWidget.style.transform = 'none';
+timerWidget.style.left = (rect.left - parentRect.left) + 'px';
+timerWidget.style.top = (rect.top - parentRect.top) + 'px';
+});
+document.addEventListener('mousemove', (e) => {
+if (!isDragging) return;
+const parentRect = windowContainer.getBoundingClientRect();
+let newX = e.clientX - parentRect.left - offsetX;
+let newY = e.clientY - parentRect.top - offsetY;
+newX = Math.max(10, Math.min(newX, parentRect.width - timerWidget.offsetWidth - 10));
+newY = Math.max(10, Math.min(newY, parentRect.height - timerWidget.offsetHeight - 10));
+timerWidget.style.left = newX + 'px';
+timerWidget.style.top = newY + 'px';
+});
+document.addEventListener('mouseup', () => { isDragging = false; });
+let currentFontSize = 30;
+document.getElementById('btn-resize-up').addEventListener('click', function() {
+currentFontSize = Math.min(54, currentFontSize + 3);
+timerDisplay.style.fontSize = currentFontSize + 'px';
+this.blur();
+});
+document.getElementById('btn-resize-down').addEventListener('click', function() {
+currentFontSize = Math.max(18, currentFontSize - 3);
+timerDisplay.style.fontSize = currentFontSize + 'px';
+this.blur();
+});
+// --- 6. INPUT TASTIERA ---
+window.addEventListener('keydown', (e) => {
+if (listeningAction) { assignKey(e); return; }
+if (e.code === 'Space' && document.activeElement && document.activeElement.tagName === 'BUTTON') {
+document.activeElement.blur();
+}
+if (e.code === 'KeyC') {
+window.onCoinCollected();
+return;
+}
+if (customKeysEnabled && !settingsModal.classList.contains('active')) {
+if (e.repeat) return;
+let action = null;
+for (let act in keybinds) {
+if (e.code === keybinds[act]) { action = act; break; }
+}
+if (action) {
+e.preventDefault(); e.stopPropagation();
+const arrowMap = { up: ['ArrowUp', 38], down: ['ArrowDown', 40], left: ['ArrowLeft', 37], right: ['ArrowRight', 39] };
+const [arrowCode, keyCode] = arrowMap[action];
+const downEvent = new KeyboardEvent('keydown', { key: arrowCode, code: arrowCode, keyCode, which: keyCode, bubbles: true, cancelable: true });
+const upEvent = new KeyboardEvent('keyup', { key: arrowCode, code: arrowCode, keyCode, which: keyCode, bubbles: true, cancelable: true });
+const canvas = document.querySelector('canvas');
+if (canvas) { canvas.dispatchEvent(downEvent); canvas.dispatchEvent(upEvent); }
+document.dispatchEvent(downEvent); document.dispatchEvent(upEvent);
+}
+}
+});
+// --- 7. HOOKS POKI SDK ---
+window.onGameStarted = function() { resetTimer(); startTimer(); };
+window.onGamePaused = function() { pauseTimer(); };
+window.onGameResumed = function() { startTimer(); };
+window.onCoinCollected = function() { stopTimerWithPenalty(); };
+let sdkHooked = false;
+const hookPoki = setInterval(() => {
+if (window.PokiSDK && window.PokiSDK.gameplayStart && !sdkHooked) {
+const origStart = window.PokiSDK.gameplayStart;
+const origStop = window.PokiSDK.gameplayStop;
+window.PokiSDK.gameplayStart = function() {
+if (timerState === 'paused') window.onGameResumed();
+else if (timerState === 'idle' || timerState === 'invalid') window.onGameStarted();
+return origStart.apply(this, arguments);
+};
+window.PokiSDK.gameplayStop = function() {
+if (timerState === 'running') window.onGamePaused();
+return origStop.apply(this, arguments);
+};
+sdkHooked = true;
+clearInterval(hookPoki);
+}
+}, 400);
