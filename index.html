@@ -44,28 +44,13 @@
             position: absolute !important; top: 0 !important; left: 0 !important;
             width: 100% !important; height: 100% !important; z-index: 1 !important; overflow: hidden !important;
         }
-        #gameContainer canvas, #game-container { 
+        
+        /* Regola fondamentale per evitare lo schermo nero */
+        #gameContainer canvas, #game-container, #game-container canvas { 
             position: absolute !important; top: 0 !important; left: 0 !important;
             width: 100% !important; height: 100% !important; object-fit: contain !important;
             outline: none !important; display: block !important; margin: 0 !important; padding: 0 !important; z-index: 1 !important;
         }
-
-        /* SCHERMATA DI CARICAMENTO */
-        .loading-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #09090b; z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 0.6s ease; color: white;
-        }
-        .loading-screen.hidden { opacity: 0; pointer-events: none; }
-        .spinner {
-            width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1);
-            border-top-color: var(--dot-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { font-size: 18px; font-weight: 600; letter-spacing: 1px; color: #a1a1aa; animation: pulse 1.5s infinite alternate; }
-        .loading-title { font-size: 32px; font-weight: 800; margin-bottom: 5px; letter-spacing: -1px; }
-        .loading-title span { color: var(--dot-color); }
-        @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
 
         /* OVERLAY COUNTDOWN */
         #countdownOverlay {
@@ -112,20 +97,13 @@
         .btn-icon:hover { background: rgba(255, 255, 255, 0.15); }
         .btn-icon svg { width: 20px; height: 20px; fill: currentColor; }
 
-        /* FPS COUNTER */
-        #fpsCounter {
-            position: absolute; bottom: 24px; right: 24px; z-index: 100;
-            font-family: 'Courier New', Courier, monospace; font-size: 14px;
-            color: #00ffcc; text-shadow: 0 0 5px #00ffcc; pointer-events: none;
-        }
-
         /* TIMER WIDGET */
         #timerWidget {
             position: absolute; top: 24px; left: 50%; transform: translateX(-50%); z-index: 100;
             background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border);
             border-radius: 16px; padding: 12px 24px; color: white; cursor: grab;
             display: flex; flex-direction: column; align-items: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5); transition: border-color 0.3s, color 0.3s, transform 0.1s;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); transition: border-color 0.3s, color 0.3s;
             pointer-events: auto;
         }
         #timerWidget:active { cursor: grabbing; }
@@ -163,112 +141,22 @@
         .btn-close { width: 100%; padding: 12px; background: white; color: black; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 15px; }
     </style>
 
-    <!-- 1. HOOK COMPLETO PRIMA DEL CARICAMENTO DI UNITY / POKI -->
+    <!-- HACK PASSIVO LOCALSTORAGE (Sicuro, non rompe il gioco) -->
     <script>
-        window.activeUnityInstance = null;
-        window.inGameCoins = 0;
-        window.isGameRunning = false;
-        window.isGamePaused = false;
-
-        // Intercetta la creazione dell'istanza Unity
-        const originalCreateUnityInstance = window.createUnityInstance;
-        Object.defineProperty(window, 'UnityLoader', {
-            configurable: true,
-            set: function(val) {
-                this._UnityLoader = val;
-                if (val && val.instantiate) {
-                    const originalInstantiate = val.instantiate;
-                    val.instantiate = function(container, url, options) {
-                        const originalOnProgress = options.onProgress;
-                        const instance = originalInstantiate.call(this, container, url, options);
-                        window.activeUnityInstance = instance;
-                        setupUnityMemoryBridge();
-                        return instance;
-                    };
-                }
-            },
-            get: function() { return this._UnityLoader; }
-        });
-
-        // INIEZIONE DI SALVATAGGIO 999K MONETE, CHIAVI E SBLOCCHI DIRETTAMENTE IN INDEXEDDB (Unity IDBFS)
-        (function inject999kSave() {
-            const req = indexedDB.open('/idbfs');
-            req.onsuccess = function() {
-                const db = req.result;
-                if (db.objectStoreNames.contains('FILE_DATA')) {
-                    const tx = db.transaction('FILE_DATA', 'readwrite');
-                    const store = tx.objectStore('FILE_DATA');
-                    const getAllReq = store.openCursor();
-                    getAllReq.onsuccess = function(e) {
-                        const cursor = e.target.result;
-                        if (cursor) {
-                            if (typeof cursor.key === 'string' && (cursor.key.includes('player') || cursor.key.includes('settings') || cursor.key.includes('prefs'))) {
-                                try {
-                                    let content = new TextDecoder().decode(cursor.value.contents);
-                                    content = content.replace(/("coins":)\d+/g, '$1999999')
-                                                     .replace(/("keys":)\d+/g, '$1999999')
-                                                     .replace(/("characters":\[)([^\]]+)(\])/g, '$1"all"$3');
-                                    cursor.value.contents = new TextEncoder().encode(content);
-                                    cursor.update(cursor.value);
-                                } catch(err) {}
-                            }
-                            cursor.continue();
-                        }
-                    };
-                }
-            };
-        })();
-
-        // Intercetta i log e le chiamate di PokiSDK / C# per intercettare i bottoni di gioco
-        const originalConsoleLog = console.log;
-        console.log = function(...args) {
-            originalConsoleLog.apply(console, args);
-            const msg = args.join(' ');
-
-            // Rileva quando premi Play nel gioco
-            if (msg.includes('gameplayStart') || msg.includes('GameStarted') || msg.includes('StartGame')) {
-                window.onSubwayPlay();
-            }
-            // Rileva quando premi la rotellina/impostazioni dentro Subway Surfers o ESC
-            if (msg.includes('gameplayStop') || msg.includes('OpenPauseMenu') || msg.includes('GamePause')) {
-                window.onSubwayPause();
-            }
-            // Rileva quando premi "Resume" dentro il menu di pausa di Subway
-            if (msg.includes('gameplayResume') || msg.includes('ClosePauseMenu') || msg.includes('GameResume')) {
-                window.onSubwayResume();
-            }
-        };
-
-        // Bridge sulla memoria WASM per monitorare istante per istante le monete raccolte
-        function setupUnityMemoryBridge() {
-            setInterval(() => {
-                if (!window.activeUnityInstance || !window.activeUnityInstance.Module) return;
-                const mod = window.activeUnityInstance.Module;
-                
-                // Forziamo 999k monete/chiavi nella memoria di gioco se raggiungibile
-                try {
-                    if (mod.SendMessage) {
-                        // Inietta personaggi e currency
-                        mod.SendMessage("GameManager", "AddCoins", 999999);
-                        mod.SendMessage("GameManager", "AddKeys", 999999);
-                        mod.SendMessage("CharacterManager", "UnlockAllCharacters");
-                    }
-                } catch(e) {}
-
-                // Rilevamento monete raccolte durante la corsa
-                if (window.isGameRunning && !window.isGamePaused) {
+        (function() {
+            const originalSetItem = localStorage.setItem;
+            localStorage.setItem = function(key, value) {
+                if (typeof value === 'string' && (value.includes('"coins"') || value.includes('"keys"'))) {
                     try {
-                        if (mod.HEAP32) {
-                            // Se le monete salgono di 1, No-Coin Fallito!
-                            const currentCoins = mod.HEAP32[mod._currentCoinOffset || 0];
-                            if (currentCoins > 0) {
-                                window.onCoinCollected();
-                            }
-                        }
+                        let data = JSON.parse(value);
+                        if (data.coins !== undefined) data.coins = 999999;
+                        if (data.keys !== undefined) data.keys = 999999;
+                        value = JSON.stringify(data);
                     } catch(e) {}
                 }
-            }, 100);
-        }
+                originalSetItem.apply(this, arguments);
+            };
+        })();
     </script>
 
     <script type="text/javascript" src="4399.js"></script>
@@ -290,12 +178,6 @@
 
     <div class="window-container" id="windowContainer">
         
-        <div class="loading-screen" id="loadingScreen">
-            <div class="loading-title">krokz<span> no coin</span></div>
-            <div class="spinner"></div>
-            <div class="loading-text">Loading Game & 999k Profile...</div>
-        </div>
-
         <div id="gameContainer" tabindex="0"></div>
 
         <div id="countdownOverlay">
@@ -314,8 +196,6 @@
                 </button>
             </div>
         </div>
-
-        <div id="fpsCounter">FPS: 0</div>
 
         <div id="timerWidget" class="glass-panel">
             <div class="timer-label">No Coin Timer</div>
@@ -341,50 +221,100 @@
     <script type="text/javascript" src="master-loader.js"></script>
 
     <script>
+        // DOM Elements
         const windowContainer = document.getElementById('windowContainer');
         const gameContainer = document.getElementById('gameContainer');
         const fullscreenBtn = document.getElementById('fullscreenBtn');
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsModal = document.getElementById('settingsModal');
         const closeSettings = document.getElementById('closeSettings');
-        const loadingScreen = document.getElementById('loadingScreen');
         const timerWidget = document.getElementById('timerWidget');
         const timerDisplay = document.getElementById('timerDisplay');
-        const autoRestartToggle = document.getElementById('autoRestartToggle');
         const countdownOverlay = document.getElementById('countdownOverlay');
         const countdownText = document.getElementById('countdownText');
-        const fpsCounter = document.getElementById('fpsCounter');
+        const autoRestartToggle = document.getElementById('autoRestartToggle');
 
         let autoRestartEnabled = true;
         autoRestartToggle.addEventListener('change', (e) => autoRestartEnabled = e.target.checked);
 
+        // RIPRISTINO DELL'INSERIMENTO CORRETTO DEL CANVAS (Risolve lo schermo nero)
+        const gameCheckInterval = setInterval(() => {
+            const unityWrapper = document.getElementById('game-container');
+            if (unityWrapper && unityWrapper.parentElement !== gameContainer) {
+                gameContainer.appendChild(unityWrapper);
+            }
+            
+            const canvas = document.querySelector('canvas');
+            if (canvas && !canvas.hasAttribute('data-focus-init')) {
+                canvas.setAttribute('tabindex', '0');
+                canvas.setAttribute('data-focus-init', 'true');
+                canvas.focus();
+                
+                // EVENTO CLICK DEL MOUSE SUL GIOCO PER INTERCETTARE LE IMPOSTAZIONI E IL RESUME
+                canvas.addEventListener('mousedown', (e) => {
+                    canvas.focus();
+                    
+                    const rect = canvas.getBoundingClientRect();
+                    const x = (e.clientX - rect.left) / rect.width;
+                    const y = (e.clientY - rect.top) / rect.height;
+
+                    // Click in alto a sinistra (Ingranaggio impostazioni di Subway)
+                    if (x < 0.15 && y < 0.15) {
+                        if (timerState === 'running') window.onGamePaused();
+                    }
+                    // Click centrale (Tasto Play o tasto Resume di Subway)
+                    else if (x > 0.3 && x < 0.7 && y > 0.3 && y < 0.8) {
+                        if (timerState === 'paused') window.onGameResumed();
+                        else if (timerState === 'idle') window.onGameStarted();
+                    }
+                });
+                
+                clearInterval(gameCheckInterval);
+            }
+        }, 500);
+
+        // Tasti Esc e Spazio
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Escape' && timerState === 'running') {
+                window.onGamePaused();
+            }
+            if (e.code === 'Space' && timerState === 'idle') {
+                window.onGameStarted();
+            }
+        });
+
+        // UI Settings & Fullscreen
         settingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
         closeSettings.addEventListener('click', () => settingsModal.classList.remove('active'));
-
         fullscreenBtn.addEventListener('click', () => {
             windowContainer.classList.toggle('fullscreen');
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
         });
 
-        // Nascondi schermata di caricamento
-        let attempts = 0;
-        const gameCheckInterval = setInterval(() => {
-            attempts++;
-            const canvas = document.querySelector('canvas');
-            if (canvas) {
-                if (attempts > 5 && !loadingScreen.classList.contains('hidden')) {
-                    loadingScreen.classList.add('hidden');
-                    setTimeout(() => { if(loadingScreen) loadingScreen.remove(); }, 600);
-                }
-            }
-            if (attempts > 30) clearInterval(gameCheckInterval);
-        }, 500);
+        // Widget Draggable
+        let isDragging = false, offsetX, offsetY;
+        timerWidget.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            const rect = timerWidget.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            timerWidget.style.transform = 'none';
+            timerWidget.style.left = rect.left + 'px';
+            timerWidget.style.top = rect.top + 'px';
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            timerWidget.style.left = (e.clientX - offsetX) + 'px';
+            timerWidget.style.top = (e.clientY - offsetY) + 'px';
+        });
+        document.addEventListener('mouseup', () => { isDragging = false; });
 
-        // --- TIMER ENGINE ---
-        let timerState = 'idle'; // 'idle', 'running', 'paused', 'failed'
+        // --- SISTEMA TIMER ---
+        let timerState = 'idle'; // idle, running, paused, failed
         let startTime = 0;
         let elapsedTime = 0;
-        let timerRaf = null;
+        let timerRaf;
+        let countdownInterval;
 
         function formatTime(ms) {
             const minutes = String(Math.floor(ms / 60000)).padStart(2, '0');
@@ -393,146 +323,76 @@
             return `${minutes}:${seconds}:${milliseconds}`;
         }
 
-        function runTimer() {
+        function updateTimer() {
             if (timerState !== 'running') return;
             elapsedTime = performance.now() - startTime;
             timerDisplay.innerText = formatTime(elapsedTime);
-            timerRaf = requestAnimationFrame(runTimer);
+            timerRaf = requestAnimationFrame(updateTimer);
         }
 
-        function resetAndStart() {
-            cancelAnimationFrame(timerRaf);
+        window.onGameStarted = function() {
+            if (timerState === 'running') return;
+            timerState = 'running';
             elapsedTime = 0;
             startTime = performance.now();
-            timerState = 'running';
-            window.isGameRunning = true;
-            window.isGamePaused = false;
             timerWidget.classList.remove('invalid', 'paused');
-            timerRaf = requestAnimationFrame(runTimer);
-        }
+            cancelAnimationFrame(timerRaf);
+            timerRaf = requestAnimationFrame(updateTimer);
+        };
 
-        function pauseCurrentTimer() {
+        window.onGamePaused = function() {
             if (timerState !== 'running') return;
             timerState = 'paused';
-            window.isGamePaused = true;
             cancelAnimationFrame(timerRaf);
             timerWidget.classList.add('paused');
-        }
+        };
 
-        function resumeCurrentTimer() {
+        window.onGameResumed = function() {
             if (timerState !== 'paused') return;
-            // Countdown 3 secondi prima di riprendere
+            
+            // Countdown di 3 secondi
             countdownOverlay.classList.add('active');
             let count = 3;
             countdownText.innerText = count;
 
-            const countInterval = setInterval(() => {
+            countdownInterval = setInterval(() => {
                 count--;
                 if (count > 0) {
                     countdownText.innerText = count;
                 } else if (count === 0) {
                     countdownText.innerText = "GO!";
                 } else {
-                    clearInterval(countInterval);
+                    clearInterval(countdownInterval);
                     countdownOverlay.classList.remove('active');
                     timerState = 'running';
-                    window.isGamePaused = false;
                     timerWidget.classList.remove('paused');
                     startTime = performance.now() - elapsedTime;
-                    timerRaf = requestAnimationFrame(runTimer);
+                    timerRaf = requestAnimationFrame(updateTimer);
                 }
             }, 1000);
-        }
+        };
 
-        function failTimer() {
+        // Questa funzione deve essere richiamata quando si tocca una moneta. 
+        // Se hai già un hook interno nel file master-loader.js o 4399.js, chiamerà questa.
+        window.onCoinCollected = function() {
+            if (timerState !== 'running') return;
+            
             timerState = 'failed';
-            window.isGameRunning = false;
             cancelAnimationFrame(timerRaf);
             timerWidget.classList.add('invalid');
             timerWidget.classList.remove('paused');
 
             if (autoRestartEnabled) {
                 setTimeout(() => {
-                    restartGameInstance();
+                    window.location.reload(); // Metodo infallibile per riavviare partita e timer in WebGL
                 }, 1500);
             }
-        }
-
-        function restartGameInstance() {
-            timerState = 'idle';
-            elapsedTime = 0;
-            timerDisplay.innerText = "00:00:000";
-            timerWidget.classList.remove('invalid', 'paused');
-
-            // Riavvia Unity direttamente simulando morte/restart o reload rapido
-            if (window.activeUnityInstance && window.activeUnityInstance.SendMessage) {
-                try {
-                    window.activeUnityInstance.SendMessage("GameManager", "RestartGame");
-                    return;
-                } catch(e) {}
-            }
-            // Fallback reload istantaneo del canvas
-            const canvas = document.querySelector('canvas');
-            if (canvas) {
-                const spaceEvt = new KeyboardEvent('keydown', { key: ' ', code: 'Space', keyCode: 32, bubbles: true });
-                canvas.dispatchEvent(spaceEvt);
-            }
-        }
-
-        // --- HOOK DIRETTI COLLEGATI AGLI EVENTI DI GIOCO DI SUBWAY SURFERS ---
-        window.onSubwayPlay = function() {
-            resetAndStart();
         };
 
-        window.onSubwayPause = function() {
-            pauseCurrentTimer();
-        };
-
-        window.onSubwayResume = function() {
-            resumeCurrentTimer();
-        };
-
-        window.onCoinCollected = function() {
-            failTimer();
-        };
-
-        // --- GESTIONE DEI TASTI DI GIOCO (Spazio per iniziare, ESC per fermare) ---
+        // Funzione di debug temporanea: premi 'C' per testare la sconfitta "No Coin" e l'auto restart
         window.addEventListener('keydown', (e) => {
-            // Se preme ESC da tastiera
-            if (e.code === 'Escape') {
-                if (timerState === 'running') {
-                    window.onSubwayPause();
-                }
-            }
-            // Se preme Spazio per fare Play dalla schermata iniziale
-            if (e.code === 'Space' && timerState === 'idle') {
-                window.onSubwayPlay();
-            }
-        });
-
-        // Intercetta il click col mouse nell'angolo superiore sinistro del canvas (Icona Settings di Subway)
-        window.addEventListener('mousedown', (e) => {
-            const canvas = document.querySelector('canvas');
-            if (!canvas) return;
-            const rect = canvas.getBoundingClientRect();
-            
-            // Coordinate relative all'interno del gioco
-            const clickX = (e.clientX - rect.left) / rect.width;
-            const clickY = (e.clientY - rect.top) / rect.height;
-
-            // Se clicca sull'ingranaggio in alto a sinistra di Subway (X < 0.2, Y < 0.2)[cite: 1]
-            if (clickX >= 0.02 && clickX <= 0.18 && clickY >= 0.02 && clickY <= 0.18) {
-                if (timerState === 'running') {
-                    window.onSubwayPause();
-                }
-            }
-
-            // Se clicca al centro (Play / Tap to Play o Resume)[cite: 1]
-            if (timerState === 'paused' && clickX >= 0.35 && clickX <= 0.65 && clickY >= 0.40 && clickY <= 0.70) {
-                window.onSubwayResume();
-            }
-            if (timerState === 'idle' && clickX >= 0.30 && clickX <= 0.70 && clickY >= 0.50 && clickY <= 0.85) {
-                window.onSubwayPlay();
+            if (e.code === 'KeyC') {
+                window.onCoinCollected();
             }
         });
     </script>
