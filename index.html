@@ -6,7 +6,7 @@
     <title>krokz // no coin challenge</title>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@700;800&display=swap');
+        @import url('https://googleapis.com');
         
         :root {
             --bg-dark: #09090b; 
@@ -60,7 +60,6 @@
         }
 
         /* --- FIX DEFINITIVO DEL MOUSE AL CENTRO --- */
-        /* Qualsiasi wrapper intermedio lascia passare i click al 100%, SOLO il canvas li riceve */
         #gameContainer, #game-container, #gameContainer div {
             position: absolute !important; top: 0 !important; left: 0 !important;
             width: 100% !important; height: 100% !important; 
@@ -73,7 +72,7 @@
             position: absolute !important; top: 0 !important; left: 0 !important;
             width: 100% !important; height: 100% !important;
             outline: none !important; display: block !important; 
-            pointer-events: auto !important; /* IL CANVAS RICEVE TUTTI I CLICK */
+            pointer-events: auto !important; 
             z-index: 2 !important;
             cursor: default;
         }
@@ -104,7 +103,7 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        /* UI OVERLAY (Completamente intangibile ai click) */
+        /* UI OVERLAY */
         .ui-overlay {
             position: absolute; top: 0; left: 0; width: 100%;
             z-index: 20; pointer-events: none !important; 
