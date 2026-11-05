@@ -44,15 +44,30 @@
             position: absolute !important; top: 0 !important; left: 0 !important;
             width: 100% !important; height: 100% !important; z-index: 1 !important; overflow: hidden !important;
         }
-        
-        /* Regola fondamentale per evitare lo schermo nero */
-        #gameContainer canvas, #game-container, #game-container canvas { 
+        #gameContainer canvas, #game-container { 
             position: absolute !important; top: 0 !important; left: 0 !important;
             width: 100% !important; height: 100% !important; object-fit: contain !important;
             outline: none !important; display: block !important; margin: 0 !important; padding: 0 !important; z-index: 1 !important;
         }
 
-        /* OVERLAY COUNTDOWN */
+        /* SCHERMATA DI CARICAMENTO */
+        .loading-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: #09090b; z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.6s ease; color: white;
+        }
+        .loading-screen.hidden { opacity: 0; pointer-events: none; }
+        .spinner {
+            width: 50px; height: 50px; border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--dot-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 18px; font-weight: 600; letter-spacing: 1px; color: #a1a1aa; animation: pulse 1.5s infinite alternate; }
+        .loading-title { font-size: 32px; font-weight: 800; margin-bottom: 5px; letter-spacing: -1px; }
+        .loading-title span { color: var(--dot-color); }
+        @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+
+        /* OVERLAY COUNTDOWN 3 SECONDI */
         #countdownOverlay {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 150;
@@ -97,21 +112,32 @@
         .btn-icon:hover { background: rgba(255, 255, 255, 0.15); }
         .btn-icon svg { width: 20px; height: 20px; fill: currentColor; }
 
+        /* FPS COUNTER */
+        #fpsCounter {
+            position: absolute; bottom: 24px; right: 24px; z-index: 100;
+            font-family: 'Courier New', Courier, monospace; font-size: 14px;
+            color: #00ffcc; text-shadow: 0 0 5px #00ffcc; pointer-events: none;
+        }
+
         /* TIMER WIDGET */
         #timerWidget {
             position: absolute; top: 24px; left: 50%; transform: translateX(-50%); z-index: 100;
             background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border);
             border-radius: 16px; padding: 12px 24px; color: white; cursor: grab;
             display: flex; flex-direction: column; align-items: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5); transition: border-color 0.3s, color 0.3s;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5); transition: border-color 0.3s, color 0.3s, transform 0.1s;
             pointer-events: auto;
         }
         #timerWidget:active { cursor: grabbing; }
-        #timerWidget.invalid { border-color: #ef4444 !important; color: #ef4444 !important; }
+        #timerWidget.invalid { border-color: #ef4444; color: #ef4444; }
         #timerWidget.paused { border-color: #eab308; color: #eab308; }
 
         .timer-label { font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: #a1a1aa; margin-bottom: 4px; }
-        #timerDisplay { font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        #timerDisplay { font-family: 'Courier New', Courier, monospace; font-size: 32px; font-weight: 800; font-variant-numeric: tabular-nums; transition: font-size 0.2s; }
+        
+        .timer-controls { display: flex; gap: 8px; margin-top: 8px; }
+        .timer-btn { background: rgba(255,255,255,0.1); border: none; color: white; border-radius: 6px; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .timer-btn:hover { background: rgba(255,255,255,0.2); }
 
         /* SETTINGS MODAL */
         .modal-overlay {
@@ -128,9 +154,15 @@
             max-height: 80vh; overflow-y: auto;
         }
         .modal-overlay.active .modal-content { transform: translateY(0); }
+        
         .modal-title { font-size: 24px; font-weight: 800; margin-bottom: 20px; color: white; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
         
-        .setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: white; font-weight: 600; font-size: 14px; }
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; color: white; font-weight: 600; font-size: 14px;
+        }
+
+        /* Switch Toggle */
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3f3f46; transition: .4s; border-radius: 28px; }
@@ -138,24 +170,58 @@
         input:checked + .slider { background-color: var(--dot-color); }
         input:checked + .slider:before { transform: translateX(22px); }
 
+        /* Keybind Buttons */
+        .keybind-btn {
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 6px 16px; border-radius: 8px; font-weight: 800; font-family: 'Courier New', Courier, monospace;
+            cursor: pointer; transition: all 0.2s; min-width: 60px; text-align: center;
+        }
+        .keybind-btn:hover { background: rgba(255,255,255,0.2); }
+        .keybind-btn.listening { background: var(--dot-color); color: white; border-color: white; animation: pulse 1s infinite alternate; }
+
         .btn-close { width: 100%; padding: 12px; background: white; color: black; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; margin-top: 15px; }
+        .btn-close:hover { background: #e4e4e7; }
     </style>
 
-    <!-- HACK PASSIVO LOCALSTORAGE (Sicuro, non rompe il gioco) -->
+    <!-- INIEZIONE TRUCCHI (Sicura tramite LocalStorage) -->
     <script>
         (function() {
-            const originalSetItem = localStorage.setItem;
-            localStorage.setItem = function(key, value) {
-                if (typeof value === 'string' && (value.includes('"coins"') || value.includes('"keys"'))) {
+            const originalSetItem = Storage.prototype.setItem;
+            Storage.prototype.setItem = function(key, val) {
+                if (key.includes('save') || key.includes('player') || key.includes('coin') || key.includes('key')) {
                     try {
-                        let data = JSON.parse(value);
-                        if (data.coins !== undefined) data.coins = 999999;
-                        if (data.keys !== undefined) data.keys = 999999;
-                        value = JSON.stringify(data);
+                        let data = JSON.parse(val);
+                        if (data && data.coins !== undefined) {
+                            data.coins = 999999;
+                            data.keys = 999999;
+                            data.powerups = 999999;
+                            val = JSON.stringify(data);
+                        }
                     } catch(e) {}
                 }
-                originalSetItem.apply(this, arguments);
+                return originalSetItem.apply(this, arguments);
             };
+        })();
+
+        // Il tuo script audio originale per gestire la pausa senza rompere nulla
+        (function() {
+            const OriginalAudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!OriginalAudioContext) return;
+            window.AudioContext = function() {
+                const context = new OriginalAudioContext();
+                const originalSuspend = context.suspend;
+                const originalResume = context.resume;
+                context.suspend = function() {
+                    if (window.onGamePaused) window.onGamePaused();
+                    return originalSuspend.apply(context, arguments);
+                };
+                context.resume = function() {
+                    if (window.onGameResumed) window.onGameResumed();
+                    return originalResume.apply(context, arguments);
+                };
+                return context;
+            };
+            window.webkitAudioContext = window.AudioContext;
         })();
     </script>
 
@@ -178,6 +244,12 @@
 
     <div class="window-container" id="windowContainer">
         
+        <div class="loading-screen" id="loadingScreen">
+            <div class="loading-title">krokz<span> no coin</span></div>
+            <div class="spinner"></div>
+            <div class="loading-text">Loading Game...</div>
+        </div>
+
         <div id="gameContainer" tabindex="0"></div>
 
         <div id="countdownOverlay">
@@ -188,7 +260,7 @@
             <div class="glass-panel logo">krokz <span class="highlight">no coin</span></div>
             
             <div class="top-right-buttons">
-                <button class="btn-icon glass-panel" id="settingsBtn" title="Site Settings">
+                <button class="btn-icon glass-panel" id="settingsBtn" title="Settings">
                     <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
                 </button>
                 <button class="btn-icon glass-panel" id="fullscreenBtn" title="Toggle Fullscreen">
@@ -197,14 +269,22 @@
             </div>
         </div>
 
+        <div id="fpsCounter">FPS: 0</div>
+
         <div id="timerWidget" class="glass-panel">
             <div class="timer-label">No Coin Timer</div>
             <div id="timerDisplay">00:00:000</div>
+            <div class="timer-controls">
+                <button class="timer-btn" id="btn-resize-down">-</button>
+                <button class="timer-btn" id="btn-resize-up">+</button>
+            </div>
         </div>
 
+        <!-- SETTINGS MODAL CON KEYBINDS -->
         <div class="modal-overlay" id="settingsModal">
             <div class="modal-content glass-panel">
                 <div class="modal-title">Settings</div>
+                
                 <div class="setting-row">
                     <span>Auto Restart on Coin</span>
                     <label class="switch">
@@ -212,6 +292,34 @@
                         <span class="slider"></span>
                     </label>
                 </div>
+
+                <div class="setting-row" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+                    <span>Enable Custom Keys (WASD/Arrows)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="customKeysToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <div id="keybind-container" style="opacity: 1; transition: opacity 0.3s;">
+                    <div class="setting-row">
+                        <span>Move Up (Jump)</span>
+                        <button class="keybind-btn" id="bind-up">W</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Move Down (Roll)</span>
+                        <button class="keybind-btn" id="bind-down">S</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Move Left</span>
+                        <button class="keybind-btn" id="bind-left">A</button>
+                    </div>
+                    <div class="setting-row">
+                        <span>Move Right</span>
+                        <button class="keybind-btn" id="bind-right">D</button>
+                    </div>
+                </div>
+
                 <button class="btn-close" id="closeSettings">Close</button>
             </div>
         </div>
@@ -228,72 +336,216 @@
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsModal = document.getElementById('settingsModal');
         const closeSettings = document.getElementById('closeSettings');
+        const loadingScreen = document.getElementById('loadingScreen');
         const timerWidget = document.getElementById('timerWidget');
         const timerDisplay = document.getElementById('timerDisplay');
+        const autoRestartToggle = document.getElementById('autoRestartToggle');
+        const customKeysToggle = document.getElementById('customKeysToggle');
+        const keybindContainer = document.getElementById('keybind-container');
         const countdownOverlay = document.getElementById('countdownOverlay');
         const countdownText = document.getElementById('countdownText');
-        const autoRestartToggle = document.getElementById('autoRestartToggle');
+        const fpsCounter = document.getElementById('fpsCounter');
 
+        // --- 1. SETTINGS E KEYBINDS STATE ---
         let autoRestartEnabled = true;
+        let customKeysEnabled = true;
+        
+        let keybinds = { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD' };
+        const bindBtns = {
+            up: document.getElementById('bind-up'), down: document.getElementById('bind-down'),
+            left: document.getElementById('bind-left'), right: document.getElementById('bind-right')
+        };
+
+        function formatKeyName(code) {
+            if (code.startsWith('Key')) return code.replace('Key', '');
+            if (code.startsWith('Arrow')) return code.replace('Arrow', '');
+            if (code.startsWith('Digit')) return code.replace('Digit', '');
+            if (code === 'Space') return 'SPACE';
+            return code;
+        }
+
+        for (let action in keybinds) { bindBtns[action].innerText = formatKeyName(keybinds[action]); }
+
+        let listeningAction = null;
+        for (let action in bindBtns) {
+            bindBtns[action].addEventListener('click', (e) => {
+                if (listeningAction) return;
+                e.stopPropagation();
+                listeningAction = action;
+                bindBtns[action].classList.add('listening');
+                bindBtns[action].innerText = 'Press...';
+            });
+        }
+
+        function assignKey(e) {
+            if (!listeningAction) return;
+            e.preventDefault(); e.stopPropagation();
+            keybinds[listeningAction] = e.code;
+            bindBtns[listeningAction].classList.remove('listening');
+            bindBtns[listeningAction].innerText = formatKeyName(e.code);
+            listeningAction = null;
+        }
+
+        settingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
+        closeSettings.addEventListener('click', () => {
+            settingsModal.classList.remove('active');
+            listeningAction = null;
+            for (let action in bindBtns) bindBtns[action].classList.remove('listening');
+        });
+        
         autoRestartToggle.addEventListener('change', (e) => autoRestartEnabled = e.target.checked);
-
-        // RIPRISTINO DELL'INSERIMENTO CORRETTO DEL CANVAS (Risolve lo schermo nero)
-        const gameCheckInterval = setInterval(() => {
-            const unityWrapper = document.getElementById('game-container');
-            if (unityWrapper && unityWrapper.parentElement !== gameContainer) {
-                gameContainer.appendChild(unityWrapper);
-            }
-            
-            const canvas = document.querySelector('canvas');
-            if (canvas && !canvas.hasAttribute('data-focus-init')) {
-                canvas.setAttribute('tabindex', '0');
-                canvas.setAttribute('data-focus-init', 'true');
-                canvas.focus();
-                
-                // EVENTO CLICK DEL MOUSE SUL GIOCO PER INTERCETTARE LE IMPOSTAZIONI E IL RESUME
-                canvas.addEventListener('mousedown', (e) => {
-                    canvas.focus();
-                    
-                    const rect = canvas.getBoundingClientRect();
-                    const x = (e.clientX - rect.left) / rect.width;
-                    const y = (e.clientY - rect.top) / rect.height;
-
-                    // Click in alto a sinistra (Ingranaggio impostazioni di Subway)
-                    if (x < 0.15 && y < 0.15) {
-                        if (timerState === 'running') window.onGamePaused();
-                    }
-                    // Click centrale (Tasto Play o tasto Resume di Subway)
-                    else if (x > 0.3 && x < 0.7 && y > 0.3 && y < 0.8) {
-                        if (timerState === 'paused') window.onGameResumed();
-                        else if (timerState === 'idle') window.onGameStarted();
-                    }
-                });
-                
-                clearInterval(gameCheckInterval);
-            }
-        }, 500);
-
-        // Tasti Esc e Spazio
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Escape' && timerState === 'running') {
-                window.onGamePaused();
-            }
-            if (e.code === 'Space' && timerState === 'idle') {
-                window.onGameStarted();
-            }
+        customKeysToggle.addEventListener('change', (e) => {
+            customKeysEnabled = e.target.checked;
+            keybindContainer.style.opacity = customKeysEnabled ? '1' : '0.4';
+            keybindContainer.style.pointerEvents = customKeysEnabled ? 'auto' : 'none';
         });
 
-        // UI Settings & Fullscreen
-        settingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
-        closeSettings.addEventListener('click', () => settingsModal.classList.remove('active'));
+        // --- 2. FULLSCREEN & CARICAMENTO (Identico al tuo codice) ---
         fullscreenBtn.addEventListener('click', () => {
             windowContainer.classList.toggle('fullscreen');
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
         });
 
-        // Widget Draggable
+        let attempts = 0;
+        const gameCheckInterval = setInterval(() => {
+            attempts++;
+            const canvas = document.querySelector('canvas');
+            if (canvas) {
+                if (!canvas.hasAttribute('data-focus-init')) {
+                    canvas.setAttribute('tabindex', '0');
+                    canvas.setAttribute('data-focus-init', 'true');
+                    canvas.focus();
+                    
+                    // Rileva click sul gioco per gestire Start/Pausa in modo sicuro
+                    canvas.addEventListener('mousedown', (e) => {
+                        canvas.focus();
+                        const rect = canvas.getBoundingClientRect();
+                        const x = (e.clientX - rect.left) / rect.width;
+                        const y = (e.clientY - rect.top) / rect.height;
+
+                        // Click in alto a sx (Pausa/Impostazioni del gioco Subway)
+                        if (x < 0.15 && y < 0.15) {
+                            if (timerState === 'running') window.onGamePaused();
+                        }
+                        // Click al centro (Gioca / Riprendi)[cite: 1]
+                        else if (x > 0.3 && x < 0.7 && y > 0.3 && y < 0.8) {
+                            if (timerState === 'idle') window.onGameStarted();
+                            else if (timerState === 'paused') window.onGameResumed();
+                        }
+                    });
+                }
+                if (attempts > 5 && !loadingScreen.classList.contains('hidden')) {
+                    loadingScreen.classList.add('hidden');
+                    setTimeout(() => { if(loadingScreen) loadingScreen.remove(); }, 600);
+                }
+            }
+            const unityWrapper = document.getElementById('game-container');
+            if (unityWrapper && unityWrapper.parentElement !== gameContainer) {
+                gameContainer.appendChild(unityWrapper);
+            }
+            if (attempts > 30) clearInterval(gameCheckInterval);
+        }, 500);
+
+        // --- 3. FPS COUNTER ---
+        let lastFrameTime = performance.now();
+        let frames = 0;
+        function updateFPS() {
+            frames++;
+            const now = performance.now();
+            if (now - lastFrameTime >= 1000) {
+                fpsCounter.innerText = `FPS: ${frames}`;
+                frames = 0;
+                lastFrameTime = now;
+            }
+            requestAnimationFrame(updateFPS);
+        }
+        requestAnimationFrame(updateFPS);
+
+        // --- 4. TIMER LOGIC & COUNTDOWN (Riscritto per non bloccarsi) ---
+        let timerState = 'idle';
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval;
+        let countdownInterval;
+
+        function formatTime(ms) {
+            const minutes = String(Math.floor(ms / 60000)).padStart(2, '0');
+            const seconds = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
+            const milliseconds = String(Math.floor(ms % 1000)).padStart(3, '0');
+            return `${minutes}:${seconds}:${milliseconds}`;
+        }
+
+        function updateTimer() {
+            if (timerState !== 'running') return;
+            elapsedTime = performance.now() - startTime;
+            timerDisplay.innerText = formatTime(elapsedTime);
+            timerInterval = requestAnimationFrame(updateTimer);
+        }
+
+        function startTimer() {
+            if (timerState === 'running') return;
+            timerState = 'running';
+            timerWidget.classList.remove('invalid', 'paused');
+            startTime = performance.now() - elapsedTime;
+            cancelAnimationFrame(timerInterval);
+            timerInterval = requestAnimationFrame(updateTimer);
+        }
+
+        function pauseTimer() {
+            if (timerState !== 'running') return;
+            timerState = 'paused';
+            cancelAnimationFrame(timerInterval);
+            timerWidget.classList.add('paused');
+        }
+
+        function startCountdownThenResume() {
+            if (timerState !== 'paused') return;
+            timerState = 'countdown';
+            countdownOverlay.classList.add('active');
+            let count = 3;
+            countdownText.innerText = count;
+
+            countdownInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    countdownText.innerText = count;
+                } else if (count === 0) {
+                    countdownText.innerText = "GO!";
+                } else {
+                    clearInterval(countdownInterval);
+                    countdownOverlay.classList.remove('active');
+                    startTimer();
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            timerState = 'idle';
+            elapsedTime = 0;
+            cancelAnimationFrame(timerInterval);
+            clearInterval(countdownInterval);
+            countdownOverlay.classList.remove('active');
+            timerDisplay.innerText = "00:00:000";
+            timerWidget.classList.remove('invalid', 'paused');
+        }
+
+        function stopTimerWithPenalty() {
+            if (timerState !== 'running') return;
+            timerState = 'invalid';
+            cancelAnimationFrame(timerInterval);
+            timerWidget.classList.add('invalid');
+            timerWidget.classList.remove('paused');
+            
+            if (autoRestartEnabled) {
+                // Essendo webgl rubato non possiamo comandarlo da fuori, l'unico modo pulito e certo per ripartire 100% da capo
+                setTimeout(() => { window.location.reload(); }, 2000);
+            }
+        }
+
+        // --- 5. TIMER WIDGET DRAG & RESIZE ---
         let isDragging = false, offsetX, offsetY;
         timerWidget.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'BUTTON') return;
             isDragging = true;
             const rect = timerWidget.getBoundingClientRect();
             offsetX = e.clientX - rect.left;
@@ -309,92 +561,51 @@
         });
         document.addEventListener('mouseup', () => { isDragging = false; });
 
-        // --- SISTEMA TIMER ---
-        let timerState = 'idle'; // idle, running, paused, failed
-        let startTime = 0;
-        let elapsedTime = 0;
-        let timerRaf;
-        let countdownInterval;
+        let currentFontSize = 32;
+        document.getElementById('btn-resize-up').addEventListener('click', () => { currentFontSize += 4; timerDisplay.style.fontSize = currentFontSize + 'px'; });
+        document.getElementById('btn-resize-down').addEventListener('click', () => { if (currentFontSize > 16) { currentFontSize -= 4; timerDisplay.style.fontSize = currentFontSize + 'px'; } });
 
-        function formatTime(ms) {
-            const minutes = String(Math.floor(ms / 60000)).padStart(2, '0');
-            const seconds = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
-            const milliseconds = String(Math.floor(ms % 1000)).padStart(3, '0');
-            return `${minutes}:${seconds}:${milliseconds}`;
-        }
-
-        function updateTimer() {
-            if (timerState !== 'running') return;
-            elapsedTime = performance.now() - startTime;
-            timerDisplay.innerText = formatTime(elapsedTime);
-            timerRaf = requestAnimationFrame(updateTimer);
-        }
-
-        window.onGameStarted = function() {
-            if (timerState === 'running') return;
-            timerState = 'running';
-            elapsedTime = 0;
-            startTime = performance.now();
-            timerWidget.classList.remove('invalid', 'paused');
-            cancelAnimationFrame(timerRaf);
-            timerRaf = requestAnimationFrame(updateTimer);
-        };
-
-        window.onGamePaused = function() {
-            if (timerState !== 'running') return;
-            timerState = 'paused';
-            cancelAnimationFrame(timerRaf);
-            timerWidget.classList.add('paused');
-        };
-
-        window.onGameResumed = function() {
-            if (timerState !== 'paused') return;
-            
-            // Countdown di 3 secondi
-            countdownOverlay.classList.add('active');
-            let count = 3;
-            countdownText.innerText = count;
-
-            countdownInterval = setInterval(() => {
-                count--;
-                if (count > 0) {
-                    countdownText.innerText = count;
-                } else if (count === 0) {
-                    countdownText.innerText = "GO!";
-                } else {
-                    clearInterval(countdownInterval);
-                    countdownOverlay.classList.remove('active');
-                    timerState = 'running';
-                    timerWidget.classList.remove('paused');
-                    startTime = performance.now() - elapsedTime;
-                    timerRaf = requestAnimationFrame(updateTimer);
-                }
-            }, 1000);
-        };
-
-        // Questa funzione deve essere richiamata quando si tocca una moneta. 
-        // Se hai già un hook interno nel file master-loader.js o 4399.js, chiamerà questa.
-        window.onCoinCollected = function() {
-            if (timerState !== 'running') return;
-            
-            timerState = 'failed';
-            cancelAnimationFrame(timerRaf);
-            timerWidget.classList.add('invalid');
-            timerWidget.classList.remove('paused');
-
-            if (autoRestartEnabled) {
-                setTimeout(() => {
-                    window.location.reload(); // Metodo infallibile per riavviare partita e timer in WebGL
-                }, 1500);
-            }
-        };
-
-        // Funzione di debug temporanea: premi 'C' per testare la sconfitta "No Coin" e l'auto restart
+        // --- 6. INPUT MAPPING E KEYDOWN ---
         window.addEventListener('keydown', (e) => {
+            if (listeningAction) { assignKey(e); return; }
+
+            if (e.code === 'Escape' || e.code === 'KeyP') {
+                if (timerState === 'running') window.onGamePaused();
+                return;
+            }
+            
+            // Quando si preme spazio, avvia il timer se è in idle
+            if (e.code === 'Space' || e.code === 'Enter') {
+                if (timerState === 'idle') { resetTimer(); startTimer(); }
+                else if (timerState === 'paused') { window.onGameResumed(); }
+            }
+
+            // Test manuale perdita (Premi C) siccome non abbiamo accesso al codice C# del WebGL
             if (e.code === 'KeyC') {
                 window.onCoinCollected();
             }
+
+            if (customKeysEnabled && !settingsModal.classList.contains('active')) {
+                if (e.repeat) return;
+                let action = null;
+                for (let act in keybinds) { if (e.code === keybinds[act]) { action = act; break; } }
+                if (action) {
+                    e.preventDefault(); e.stopPropagation();
+                    let arrowCode = action === 'up' ? 'ArrowUp' : action === 'down' ? 'ArrowDown' : action === 'left' ? 'ArrowLeft' : 'ArrowRight';
+                    const keyCode = arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39;
+                    const downEvent = new KeyboardEvent('keydown', { key: arrowCode, code: arrowCode, keyCode: keyCode, which: keyCode, bubbles: true });
+                    const upEvent = new KeyboardEvent('keyup', { key: arrowCode, code: arrowCode, keyCode: keyCode, which: keyCode, bubbles: true });
+                    const canvas = document.querySelector('canvas');
+                    if (canvas) { canvas.dispatchEvent(downEvent); canvas.dispatchEvent(upEvent); }
+                }
+            }
         });
+
+        // --- 7. EVENTI DI GIOCO (HOOKS) ---
+        window.onGameStarted = function() { resetTimer(); startTimer(); };
+        window.onGamePaused = function() { pauseTimer(); };
+        window.onGameResumed = function() { if (timerState === 'paused') startCountdownThenResume(); };
+        window.onCoinCollected = function() { stopTimerWithPenalty(); };
     </script>
 </body>
 </html>
