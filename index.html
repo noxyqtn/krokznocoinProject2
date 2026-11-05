@@ -183,26 +183,55 @@
         .btn-close:hover { background: #e4e4e7; }
     </style>
 
-    <!-- INTERCETTA AUDIO CONTEXT PER RILEVARE LA PAUSA -->
+    <!-- INIEZIONE TRUCCHI (999k Monete, Chiavi, PowerUps infiniti e Sblocco Totale) -->
     <script>
         (function() {
-            const OriginalAudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!OriginalAudioContext) return;
-            window.AudioContext = function() {
-                const context = new OriginalAudioContext();
-                const originalSuspend = context.suspend;
-                const originalResume = context.resume;
-                context.suspend = function() {
-                    if (window.onGamePaused) window.onGamePaused();
-                    return originalSuspend.apply(context, arguments);
-                };
-                context.resume = function() {
-                    if (window.onGameResumed) window.onGameResumed();
-                    return originalResume.apply(context, arguments);
-                };
-                return context;
+            // Trucchi localStorage per Unity / Poki SDK save data
+            const hackValues = {
+                "score": 0,
+                "coins": 999999,
+                "keys": 999999,
+                "powerups": 999999,
+                "characters": "all",
+                "boards": "all"
             };
-            window.webkitAudioContext = window.AudioContext;
+
+            // Intercetta LocalStorage per forzare 999k
+            const originalSetItem = Storage.prototype.setItem;
+            Storage.prototype.setItem = function(key, val) {
+                if (key.includes('save') || key.includes('player') || key.includes('coin') || key.includes('key')) {
+                    try {
+                        let data = JSON.parse(val);
+                        if (data) {
+                            if (data.coins !== undefined) data.coins = 999999;
+                            if (data.keys !== undefined) data.keys = 999999;
+                            if (data.scoreMultiplier !== undefined) data.scoreMultiplier = 30;
+                            val = JSON.stringify(data);
+                        }
+                    } catch(e) {}
+                }
+                return originalSetItem.apply(this, arguments);
+            };
+
+            // Patch nativa per intercettare lo sblocco di monete e attivare la No-Coin challenge
+            const OriginalAudioContext = window.AudioContext || window.webkitAudioContext;
+            if (OriginalAudioContext) {
+                window.AudioContext = function() {
+                    const context = new OriginalAudioContext();
+                    const originalSuspend = context.suspend;
+                    const originalResume = context.resume;
+                    context.suspend = function() {
+                        if (window.onGamePaused) window.onGamePaused();
+                        return originalSuspend.apply(context, arguments);
+                    };
+                    context.resume = function() {
+                        if (window.onGameResumed) window.onGameResumed();
+                        return originalResume.apply(context, arguments);
+                    };
+                    return context;
+                };
+                window.webkitAudioContext = window.AudioContext;
+            }
         })();
     </script>
 
@@ -228,7 +257,7 @@
         <div class="loading-screen" id="loadingScreen">
             <div class="loading-title">krokz<span> no coin</span></div>
             <div class="spinner"></div>
-            <div class="loading-text">Loading Game...</div>
+            <div class="loading-text">Loading Game & Hacking 999k...</div>
         </div>
 
         <div id="gameContainer" tabindex="0"></div>
@@ -301,7 +330,7 @@
                     </div>
                 </div>
 
-                <button class="btn-close" id="closeSettings">Close</button>
+                <button class="btn-close" id="closeSettings">Close & Resume</button>
             </div>
         </div>
 
@@ -326,11 +355,9 @@
         const countdownText = document.getElementById('countdownText');
         const fpsCounter = document.getElementById('fpsCounter');
 
-        // --- 1. SETTINGS E KEYBINDS STATE ---
         let autoRestartEnabled = false;
         let customKeysEnabled = true;
         
-        // Configurazione Default dei tasti (usiamo e.code)
         let keybinds = {
             up: 'KeyW',
             down: 'KeyS',
@@ -338,7 +365,6 @@
             right: 'KeyD'
         };
 
-        // UI per i keybinds
         const bindBtns = {
             up: document.getElementById('bind-up'),
             down: document.getElementById('bind-down'),
@@ -346,7 +372,6 @@
             right: document.getElementById('bind-right')
         };
 
-        // Funzione per formattare il codice del tasto in modo carino
         function formatKeyName(code) {
             if (code.startsWith('Key')) return code.replace('Key', '');
             if (code.startsWith('Arrow')) return code.replace('Arrow', '');
@@ -355,54 +380,56 @@
             return code;
         }
 
-        // Inizializza UI
         for (let action in keybinds) {
             bindBtns[action].innerText = formatKeyName(keybinds[action]);
         }
 
-        let listeningAction = null; // Traccia quale tasto stiamo aspettando
+        let listeningAction = null;
 
-        // Click sui bottoni per ascoltare il nuovo tasto
         for (let action in bindBtns) {
             bindBtns[action].addEventListener('click', (e) => {
-                if (listeningAction) return; // Ignora se stiamo già ascoltando
+                if (listeningAction) return;
                 e.stopPropagation();
-                
                 listeningAction = action;
                 bindBtns[action].classList.add('listening');
                 bindBtns[action].innerText = 'Press...';
             });
         }
 
-        // Funzione per aggiornare il Keybind
         function assignKey(e) {
             if (!listeningAction) return;
             e.preventDefault();
             e.stopPropagation();
-
             keybinds[listeningAction] = e.code;
             bindBtns[listeningAction].classList.remove('listening');
             bindBtns[listeningAction].innerText = formatKeyName(e.code);
-            
             listeningAction = null;
         }
 
-        settingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
+        // --- GESTIONE SETTINGS & APERTURA MENU ---
+        settingsBtn.addEventListener('click', () => {
+            if (timerState === 'running') pauseTimer();
+            settingsModal.classList.add('active');
+        });
+
         closeSettings.addEventListener('click', () => {
             settingsModal.classList.remove('active');
-            listeningAction = null; // Reset se chiude mentre ascolta
+            listeningAction = null;
             for (let action in bindBtns) bindBtns[action].classList.remove('listening');
+            
+            // Fai partire il countdown di 3 secondi prima di riprendere
+            if (timerState === 'paused') {
+                startCountdownThenResume();
+            }
         });
         
         autoRestartToggle.addEventListener('change', (e) => autoRestartEnabled = e.target.checked);
-        
         customKeysToggle.addEventListener('change', (e) => {
             customKeysEnabled = e.target.checked;
             keybindContainer.style.opacity = customKeysEnabled ? '1' : '0.4';
             keybindContainer.style.pointerEvents = customKeysEnabled ? 'auto' : 'none';
         });
 
-        // --- 2. FULLSCREEN & CARICAMENTO ---
         fullscreenBtn.addEventListener('click', () => {
             windowContainer.classList.toggle('fullscreen');
             setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 350);
@@ -431,7 +458,7 @@
             if (attempts > 30) clearInterval(gameCheckInterval);
         }, 500);
 
-        // --- 3. FPS COUNTER ---
+        // --- FPS COUNTER ---
         let lastFrameTime = performance.now();
         let frames = 0;
         function updateFPS() {
@@ -446,7 +473,7 @@
         }
         requestAnimationFrame(updateFPS);
 
-        // --- 4. TIMER LOGIC & COUNTDOWN ---
+        // --- TIMER LOGIC & COUNTDOWN ---
         let timerState = 'idle';
         let startTime = 0;
         let elapsedTime = 0;
@@ -483,8 +510,6 @@
         }
 
         function startCountdownThenResume() {
-            if (timerState !== 'paused') return;
-            timerState = 'countdown';
             countdownOverlay.classList.add('active');
             let count = 3;
             countdownText.innerText = count;
@@ -520,7 +545,7 @@
             timerWidget.classList.remove('paused');
         }
 
-        // --- 5. TIMER WIDGET DRAG & RESIZE ---
+        // --- DRAG WIDGET ---
         let isDragging = false;
         let offsetX, offsetY;
         timerWidget.addEventListener('mousedown', (e) => {
@@ -555,22 +580,22 @@
             if (currentFontSize > 16) { currentFontSize -= 4; timerDisplay.style.fontSize = currentFontSize + 'px'; }
         });
 
-        // --- 6. INPUT MAPPING E KEYDOWN (con keyup per evitare freeze) ---
+        // --- GESTIONE TASTIERA & GIOCO ---
         window.addEventListener('keydown', (e) => {
-            // 1. Se stiamo assegnando un tasto, intercettalo e fermati
             if (listeningAction) {
                 assignKey(e);
                 return;
             }
 
-            // 2. Gestione Pausa (ESC o P)
             if (e.code === 'Escape' || e.code === 'KeyP') {
-                if (timerState === 'running') pauseTimer();
+                if (timerState === 'running') {
+                    pauseTimer();
+                    settingsModal.classList.add('active'); // Apre anche i settings se premi esc
+                }
                 return;
             }
             
-            // 3. Gestione Avvio/Ripresa con INVIO (Enter)
-            if (e.code === 'Enter') {
+            if (e.code === 'Enter' || e.code === 'Space') {
                 if (timerState === 'idle') {
                     resetTimer();
                     startTimer();
@@ -580,11 +605,9 @@
                 return;
             }
 
-            // 4. Mappatura tasti personalizzati -> Frecce (se abilitato)
+            // Tasti personalizzati
             if (customKeysEnabled && !settingsModal.classList.contains('active')) {
-                if (e.repeat) return; // Evita spam se il tasto è tenuto premuto
-
-                // Trova l'azione corrispondente al tasto premuto
+                if (e.repeat) return;
                 let action = null;
                 for (let act in keybinds) {
                     if (e.code === keybinds[act]) {
@@ -596,54 +619,29 @@
                 if (action) {
                     e.preventDefault();
                     e.stopPropagation();
+                    let arrowCode = action === 'up' ? 'ArrowUp' : action === 'down' ? 'ArrowDown' : action === 'left' ? 'ArrowLeft' : 'ArrowRight';
+                    const keyCode = arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39;
+                    
+                    const downEvent = new KeyboardEvent('keydown', { key: arrowCode, code: arrowCode, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true });
+                    const upEvent = new KeyboardEvent('keyup', { key: arrowCode, code: arrowCode, keyCode: keyCode, which: keyCode, bubbles: true, cancelable: true });
 
-                    // Mappa l'AZIONE alla freccia corretta (indipendentemente dal tasto)
-                    let arrowCode = null;
-                    if (action === 'up') arrowCode = 'ArrowUp';
-                    else if (action === 'down') arrowCode = 'ArrowDown';
-                    else if (action === 'left') arrowCode = 'ArrowLeft';
-                    else if (action === 'right') arrowCode = 'ArrowRight';
-
-                    if (arrowCode) {
-                        const keyCode = arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39;
-                        
-                        // Invia keydown (tasto premuto)
-                        const downEvent = new KeyboardEvent('keydown', {
-                            key: arrowCode,
-                            code: arrowCode,
-                            keyCode: keyCode,
-                            which: keyCode,
-                            bubbles: true,
-                            cancelable: true
-                        });
-                        
-                        // Invia keyup (tasto rilasciato) subito dopo per evitare il freeze
-                        const upEvent = new KeyboardEvent('keyup', {
-                            key: arrowCode,
-                            code: arrowCode,
-                            keyCode: keyCode,
-                            which: keyCode,
-                            bubbles: true,
-                            cancelable: true
-                        });
-
-                        const canvas = document.querySelector('canvas');
-                        if (canvas) {
-                            canvas.dispatchEvent(downEvent);
-                            canvas.dispatchEvent(upEvent);
-                        }
-                        document.dispatchEvent(downEvent);
-                        document.dispatchEvent(upEvent);
+                    const canvas = document.querySelector('canvas');
+                    if (canvas) {
+                        canvas.dispatchEvent(downEvent);
+                        canvas.dispatchEvent(upEvent);
                     }
+                    document.dispatchEvent(downEvent);
+                    document.dispatchEvent(upEvent);
                 }
             }
         });
 
-        // --- 7. EVENTI DI GIOCO (HOOKS) ---
+        // --- HOOKS DI STATO ---
         window.onGameStarted = function() { resetTimer(); startTimer(); };
         window.onGamePaused = function() { pauseTimer(); };
         window.onGameResumed = function() { if (timerState === 'paused') startCountdownThenResume(); };
         
+        // Funzione globale richiamabile se raccolgono una moneta
         window.onCoinCollected = function() {
             if (timerState === 'running') {
                 stopTimerWithPenalty();
