@@ -528,7 +528,42 @@
             timerWidget.classList.remove('paused');
         }
 
-        // --- 5. INPUT MAPPING E KEYDOWN ---
+        // --- 5. TIMER WIDGET DRAG & RESIZE ---
+        let isDragging = false;
+        let offsetX, offsetY;
+        timerWidget.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'BUTTON') return;
+            isDragging = true;
+            const rect = timerWidget.getBoundingClientRect();
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+            timerWidget.style.transform = 'none';
+            timerWidget.style.left = rect.left + 'px';
+            timerWidget.style.top = rect.top + 'px';
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            let newX = e.clientX - offsetX;
+            let newY = e.clientY - offsetY;
+            const containerRect = windowContainer.getBoundingClientRect();
+            if (newX < containerRect.left) newX = containerRect.left;
+            if (newY < containerRect.top) newY = containerRect.top;
+            if (newX + timerWidget.offsetWidth > containerRect.right) newX = containerRect.right - timerWidget.offsetWidth;
+            if (newY + timerWidget.offsetHeight > containerRect.bottom) newY = containerRect.bottom - timerWidget.offsetHeight;
+            timerWidget.style.left = newX + 'px';
+            timerWidget.style.top = newY + 'px';
+        });
+        document.addEventListener('mouseup', () => { isDragging = false; });
+
+        let currentFontSize = 32;
+        document.getElementById('btn-resize-up').addEventListener('click', () => {
+            currentFontSize += 4; timerDisplay.style.fontSize = currentFontSize + 'px';
+        });
+        document.getElementById('btn-resize-down').addEventListener('click', () => {
+            if (currentFontSize > 16) { currentFontSize -= 4; timerDisplay.style.fontSize = currentFontSize + 'px'; }
+        });
+
+        // --- 6. INPUT MAPPING E KEYDOWN (con keyup per evitare freeze) ---
         window.addEventListener('keydown', (e) => {
             // 1. Se stiamo assegnando un tasto, intercettalo e fermati
             if (listeningAction) {
@@ -555,7 +590,8 @@
 
             // 4. Mappatura WASD -> Frecce (se abilitato)
             if (customKeysEnabled && !settingsModal.classList.contains('active')) {
-                // Trova se il tasto premuto corrisponde a un'azione
+                if (e.repeat) return; // Ignora se il tasto è tenuto premuto (evita spam)
+
                 let action = null;
                 for (let act in keybinds) {
                     if (e.code === keybinds[act]) {
@@ -565,14 +601,11 @@
                 }
 
                 if (action) {
-                    // Blocca l'evento originale per non farlo arrivare a Unity (che non lo capirebbe)
                     e.preventDefault();
                     e.stopPropagation();
 
-                    // Determina la freccia corrispondente
                     let arrowCode = arrowMap[e.code];
                     if (!arrowCode) {
-                        // Se l'utente ha impostato un tasto non mappato, proviamo a indovinare
                         if (action === 'up') arrowCode = 'ArrowUp';
                         else if (action === 'down') arrowCode = 'ArrowDown';
                         else if (action === 'left') arrowCode = 'ArrowLeft';
@@ -580,25 +613,41 @@
                     }
 
                     if (arrowCode) {
-                        // Invia un evento keydown finto con il codice della freccia
-                        const fakeEvent = new KeyboardEvent('keydown', {
-                            key: arrowCode.replace('Arrow', 'Arrow'),
+                        const keyCode = arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39;
+                        
+                        // Invia keydown (tasto premuto)
+                        const downEvent = new KeyboardEvent('keydown', {
+                            key: arrowCode,
                             code: arrowCode,
-                            keyCode: arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39,
-                            which: arrowCode === 'ArrowUp' ? 38 : arrowCode === 'ArrowDown' ? 40 : arrowCode === 'ArrowLeft' ? 37 : 39,
+                            keyCode: keyCode,
+                            which: keyCode,
                             bubbles: true,
                             cancelable: true
                         });
-                        // Invialo al canvas e al document
+                        
+                        // Invia keyup (tasto rilasciato) subito dopo per evitare il freeze
+                        const upEvent = new KeyboardEvent('keyup', {
+                            key: arrowCode,
+                            code: arrowCode,
+                            keyCode: keyCode,
+                            which: keyCode,
+                            bubbles: true,
+                            cancelable: true
+                        });
+
                         const canvas = document.querySelector('canvas');
-                        if (canvas) canvas.dispatchEvent(fakeEvent);
-                        document.dispatchEvent(fakeEvent);
+                        if (canvas) {
+                            canvas.dispatchEvent(downEvent);
+                            canvas.dispatchEvent(upEvent);
+                        }
+                        document.dispatchEvent(downEvent);
+                        document.dispatchEvent(upEvent);
                     }
                 }
             }
         });
 
-        // --- 6. EVENTI DI GIOCO (HOOKS) ---
+        // --- 7. EVENTI DI GIOCO (HOOKS) ---
         window.onGameStarted = function() { resetTimer(); startTimer(); };
         window.onGamePaused = function() { pauseTimer(); };
         window.onGameResumed = function() { if (timerState === 'paused') startCountdownThenResume(); };
