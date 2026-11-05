@@ -275,7 +275,7 @@
                 </div>
 
                 <div class="setting-row" style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-                    <span>Enable Custom Keys</span>
+                    <span>Enable Custom Keys (WASD/Arrows)</span>
                     <label class="switch">
                         <input type="checkbox" id="customKeysToggle" checked>
                         <span class="slider"></span>
@@ -528,47 +528,13 @@
                 return;
             }
 
-            // 2. Gestione Custom Keys (WASD / Frecce)
-            if (customKeysEnabled && !settingsModal.classList.contains('active')) {
-                // Blocca lo scroll della pagina quando si usano i tasti
-                if ([keybinds.up, keybinds.down, keybinds.left, keybinds.right].includes(e.code)) {
-                    e.preventDefault();
-                }
-
-                // Se il tasto è tenuto premuto, ignora per non fare 1000 swipe
-                if (e.repeat) return;
-
-                const canvas = document.querySelector('canvas');
-                if (canvas) {
-                    const rect = canvas.getBoundingClientRect();
-                    const centerX = rect.left + rect.width / 2;
-                    const centerY = rect.top + rect.height / 2;
-                    const swipeDist = 100;
-
-                    function simulateSwipe(startX, startY, endX, endY) {
-                        const touchStart = new TouchEvent('touchstart', { touches: [new Touch({identifier: 1, target: canvas, clientX: startX, clientY: startY})], bubbles: true });
-                        const touchMove = new TouchEvent('touchmove', { touches: [new Touch({identifier: 1, target: canvas, clientX: endX, clientY: endY})], bubbles: true });
-                        const touchEnd = new TouchEvent('touchend', { touches: [], bubbles: true });
-                        
-                        canvas.dispatchEvent(touchStart);
-                        canvas.dispatchEvent(touchMove);
-                        canvas.dispatchEvent(touchEnd);
-                    }
-
-                    if (e.code === keybinds.up) simulateSwipe(centerX, centerY, centerX, centerY - swipeDist);
-                    else if (e.code === keybinds.down) simulateSwipe(centerX, centerY, centerX, centerY + swipeDist);
-                    else if (e.code === keybinds.left) simulateSwipe(centerX, centerY, centerX - swipeDist, centerY);
-                    else if (e.code === keybinds.right) simulateSwipe(centerX, centerY, centerX + swipeDist, centerY);
-                }
-            }
-
-            // 3. Gestione Pausa (ESC o P)
+            // 2. Gestione Pausa (ESC o P)
             if (e.code === 'Escape' || e.code === 'KeyP') {
                 if (timerState === 'running') pauseTimer();
             }
             
-            // 4. Gestione Spazio (Play/Resume)
-            if (e.code === 'Space') {
+            // 3. Gestione Avvio/Ripresa con INVIO (Enter)
+            if (e.code === 'Enter') {
                 if (timerState === 'idle') {
                     resetTimer();
                     startTimer();
@@ -576,6 +542,11 @@
                     startCountdownThenResume();
                 }
             }
+
+            // NON intercettiamo WASD/Frecce/Spazio: lasciamo che Unity li gestisca nativamente.
+            // Se l'utente vuole usare tasti personalizzati, dobbiamo comunque evitare conflitti.
+            // Per ora, se customKeysEnabled è true, non facciamo nulla e lasciamo passare.
+            // In futuro potremmo implementare la simulazione solo per tasti non nativi.
         });
 
         // --- 6. EVENTI DI GIOCO (HOOKS) ---
